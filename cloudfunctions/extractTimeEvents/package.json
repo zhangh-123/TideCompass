@@ -1,0 +1,9 @@
+{
+  "name": "extractTimeEvents",
+  "version": "1.0.0",
+  "description": "从体检对话中提取时间事件（阶段4）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

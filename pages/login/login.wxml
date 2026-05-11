@@ -1,0 +1,33 @@
+<view class="login-root">
+  <view class="login-inner">
+    <view class="brand-mark">
+      <view class="compass-ico" aria-hidden="true">
+        <view class="compass-ring"></view>
+        <view class="compass-needle"></view>
+      </view>
+      <text class="brand-title">财富罗盘</text>
+      <text class="brand-sub">TideCompass</text>
+    </view>
+
+    <view class="login-actions">
+      <button
+        class="wx-login-btn tap-active"
+        hover-class="none"
+        bindtap="onWechatLogin"
+        disabled="{{logging}}"
+      >
+        <view class="wx-login-inner">
+          <view class="wx-ico"></view>
+          <text class="wx-login-text">{{logging ? '登录中…' : '微信一键登录'}}</text>
+        </view>
+      </button>
+
+      <view class="legal-line">
+        <text class="legal-text">登录即表示同意</text>
+        <text class="legal-link" bindtap="onUserAgreement">《用户协议》</text>
+        <text class="legal-text">和</text>
+        <text class="legal-link" bindtap="onPrivacyPolicy">《隐私政策》</text>
+      </view>
+    </view>
+  </view>
+</view>

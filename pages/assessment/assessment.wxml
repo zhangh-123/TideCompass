@@ -1,0 +1,131 @@
+<view class="shell">
+  <view class="head-safe">
+    <view class="progress-head simple">
+      <text class="head-title">{{title}}</text>
+      <button class="ghost-btn tap-blend" size="mini" hover-class="none" bindtap="onExit">退出</button>
+    </view>
+    <view class="head-sub-row">
+      <text class="head-sub-title">财务体检 · 大约5分钟</text>
+    </view>
+  </view>
+
+  <scroll-view
+    class="chat"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    scroll-with-animation
+    scroll-into-view="{{scrollIntoView}}"
+  >
+    <view wx:if="{{messages.length <= 1}}" class="empty-tip-center">请输入你的想法，或上传相关财务文件</view>
+    <block wx:for="{{messages}}" wx:key="id">
+      <view id="msg-{{item.id}}" class="msg-row {{item.role}}">
+        <view class="bubble-wrap {{item.role}}">
+          <view
+            wx:if="{{item.messageType === 'file'}}"
+            class="file-card {{item.role}}"
+            data-local="{{item.localPath}}"
+            data-cloud="{{item.cloudFileId}}"
+            bindtap="onPreviewFile"
+          >
+            <text class="file-tag">已上传文件</text>
+            <text class="file-name">{{item.fileName}}</text>
+            <text class="file-meta">{{item.fileSizeKb}} KB · 点击查看</text>
+          </view>
+          <view wx:else class="bubble {{item.role}}">
+            <text class="bubble-text">{{item.content}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+    <view wx:if="{{aiTyping}}" class="msg-row assistant">
+      <view class="bubble-wrap assistant">
+        <view class="bubble assistant">
+          <text class="bubble-text">正在思考中…</text>
+          <text class="caret">|</text>
+        </view>
+      </view>
+    </view>
+    <view id="chat-end" class="chat-end"></view>
+  </scroll-view>
+
+  <view wx:if="{{showGenerateButton}}" class="complete-panel safe-bottom">
+    <text class="complete-tip">信息已充足，可生成报告。</text>
+    <button class="next-step-btn tap-blend" hover-class="none" bindtap="onGenerateReport" loading="{{generating}}" disabled="{{generating}}">生成报告</button>
+  </view>
+
+  <view wx:if="{{!showGenerateButton}}" class="composer safe-bottom">
+    <view class="composer-shortcuts">
+      <button
+        class="icon-btn tap-blend"
+        hover-class="none"
+        loading="{{uploadingImage}}"
+        disabled="{{uploadingImage || aiTyping || generating || sending}}"
+        bindtap="onUploadImageTap"
+      >
+        ＋
+      </button>
+      <button
+        class="icon-btn tap-blend"
+        hover-class="none"
+        disabled="{{aiTyping || generating || sending}}"
+        bindtap="onToggleEmoji"
+      >
+        ☺
+      </button>
+    </view>
+    <view class="composer-main">
+      <textarea
+        class="composer-input {{composerFocus ? 'is-focus' : ''}}"
+        placeholder="请输入回复"
+        maxlength="800"
+        auto-height
+        cursor-spacing="28"
+        show-confirm-bar="{{true}}"
+        confirm-type="send"
+        value="{{draft}}"
+        bindinput="onDraftInput"
+        bindfocus="onComposerFocus"
+        bindblur="onComposerBlur"
+        bindconfirm="onSend"
+      />
+      <button
+        class="send-btn tap-blend {{sendDisabled || aiTyping || generating || sending ? 'is-disabled' : ''}}"
+        hover-class="none"
+        disabled="{{sendDisabled || aiTyping || generating || sending}}"
+        bindtap="onSend"
+      >
+        {{sending ? '发送中…' : '发送'}}
+      </button>
+    </view>
+  </view>
+  <view wx:if="{{!showGenerateButton && emojiVisible}}" class="emoji-panel safe-bottom">
+    <view class="emoji-grid">
+      <text
+        wx:for="{{quickEmojis}}"
+        wx:key="*this"
+        class="emoji-item tap-blend"
+        data-emoji="{{item}}"
+        bindtap="onPickEmoji"
+      >
+        {{item}}
+      </text>
+    </view>
+  </view>
+  <view wx:if="{{imageReviewVisible}}" class="review-mask">
+    <view class="review-modal">
+      <text class="review-title">请确认识别内容（可修改）</text>
+      <textarea
+        class="review-input"
+        maxlength="3000"
+        auto-height
+        value="{{imageReviewText}}"
+        bindinput="onImageReviewInput"
+      />
+      <view class="review-actions">
+        <button class="review-btn ghost" hover-class="none" bindtap="onCancelImageReview">取消</button>
+        <button class="review-btn primary" hover-class="none" bindtap="onConfirmImageReview">确认并发送</button>
+      </view>
+    </view>
+  </view>
+</view>

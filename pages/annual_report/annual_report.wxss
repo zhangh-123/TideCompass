@@ -1,0 +1,198 @@
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #eef2f7;
+}
+
+.main {
+  flex: 1;
+  height: 0;
+  padding: 20rpx 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border-radius: 18rpx;
+  padding: 28rpx 26rpx;
+  border: 1rpx solid #e5e7eb;
+  margin-bottom: 20rpx;
+}
+
+.share-btn {
+  border-radius: 12rpx !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-size: 28rpx !important;
+}
+
+.card.muted {
+  color: #64748b;
+  font-size: 28rpx;
+}
+
+.year-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.year-card .label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 24rpx;
+  background: #f1f5f9;
+  border-radius: 12rpx;
+}
+
+.picker-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.picker-arrow {
+  font-size: 22rpx;
+  color: #64748b;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 20rpx;
+}
+
+.sub-caption {
+  display: block;
+  font-size: 24rpx;
+  color: #64748b;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.kv-row:last-child {
+  border-bottom: none;
+}
+
+.kv-row.highlight {
+  padding-top: 18rpx;
+  margin-top: 6rpx;
+  border-top: 1rpx solid #e2e8f0;
+  border-bottom: none;
+}
+
+.kv-k {
+  font-size: 28rpx;
+  color: #475569;
+}
+
+.kv-v {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.kv-v.income {
+  color: #059669;
+}
+
+.kv-v.expense {
+  color: #dc2626;
+}
+
+.kv-v.pos {
+  color: #059669;
+}
+
+.kv-v.neg {
+  color: #dc2626;
+}
+
+.pie-wrap {
+  width: 100%;
+  height: 440rpx;
+  position: relative;
+}
+
+.pie-ec {
+  width: 100%;
+  height: 100%;
+}
+
+.muted-block {
+  display: block;
+  font-size: 26rpx;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.tip-card {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+  font-size: 26rpx;
+  line-height: 1.45;
+}
+
+.cat-list {
+  margin-top: 20rpx;
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f8fafc;
+  font-size: 26rpx;
+}
+
+.cat-row:last-child {
+  border-bottom: none;
+}
+
+.cat-name {
+  flex: 1;
+  color: #334155;
+}
+
+.cat-amt {
+  width: 200rpx;
+  text-align: right;
+  color: #64748b;
+}
+
+.cat-pct {
+  width: 100rpx;
+  text-align: right;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.suggestion {
+  display: block;
+  font-size: 28rpx;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.bottom-spacer {
+  height: 24rpx;
+}

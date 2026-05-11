@@ -1,0 +1,127 @@
+<scroll-view class="prof-root" scroll-y enhanced show-scrollbar="{{false}}">
+  <text class="page-guide">补充基础信息，我们才能为你生成更贴合的财务分析</text>
+
+  <!-- 必填卡片 -->
+  <view class="card-block flow-module-gap">
+    <text class="card-title">必填信息</text>
+
+    <view class="form-item">
+      <text class="label-line"><text class="star">*</text>出生年份</text>
+      <picker mode="selector" range="{{yearLabels}}" value="{{birthYearIndex}}" bindchange="onBirthYearChange">
+        <view class="picker-field tap-active">
+          <text class="{{birthYearIndex > 0 ? 'pv' : 'pv-ph'}}">{{birthYearText}}</text>
+          <text class="chev">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label-line"><text class="star">*</text>职业状态</text>
+      <view class="chip-grid">
+        <view
+          wx:for="{{careerOptions}}"
+          wx:key="value"
+          class="chip tap-active {{careerStatus === item.value ? 'chip-on' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onCareerTap"
+        >
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <text class="label-line"><text class="star">*</text>家庭结构</text>
+      <view class="chip-grid">
+        <view
+          wx:for="{{familyOptions}}"
+          wx:key="value"
+          class="chip tap-active {{familyStructure === item.value ? 'chip-on' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onFamilyTap"
+        >
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item" wx:if="{{familyStructure === 'married_with_children'}}">
+      <text class="label-line"><text class="star">*</text>子女数量（0-5）</text>
+      <input
+        class="text-field"
+        type="number"
+        maxlength="1"
+        placeholder="请输入 0-5"
+        placeholder-class="ph"
+        value="{{childrenCount}}"
+        bindinput="onChildrenInput"
+      />
+    </view>
+
+    <view class="form-item row-switch">
+      <view class="label-stack">
+        <text class="label-line"><text class="star">*</text>是否有老人需要赡养</text>
+      </view>
+      <switch checked="{{supportElderly}}" bindchange="onSupportElderlyChange" color="#1e3a8a" />
+    </view>
+
+    <view class="form-item">
+      <text class="label-line"><text class="star">*</text>所在地区</text>
+      <picker mode="region" bindchange="onRegionChange">
+        <view class="picker-field tap-active">
+          <text class="{{regionLabels ? 'pv' : 'pv-ph'}}">{{regionDisplay}}</text>
+          <text class="chev">▼</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 选填折叠头 -->
+  <view class="optional-toggle tap-active" bindtap="toggleOptional">
+    <text class="optional-toggle-title">选填信息（可跳过）</text>
+    <text class="optional-toggle-hint">{{optionalExpanded ? '收起' : '展开填写'}}</text>
+    <text class="chev-mini">{{optionalExpanded ? '∧' : '∨'}}</text>
+  </view>
+
+  <view class="card-block" wx:if="{{optionalExpanded}}">
+    <view class="form-item">
+      <text class="label-line opt">教育程度</text>
+      <picker mode="selector" range="{{educationLabels}}" value="{{educationIndex}}" bindchange="onEducationChange">
+        <view class="picker-field tap-active">
+          <text class="pv">{{educationLabels[educationIndex]}}</text>
+          <text class="chev">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label-line opt">行业</text>
+      <picker mode="selector" range="{{industryLabels}}" value="{{industryIndex}}" bindchange="onIndustryChange">
+        <view class="picker-field tap-active">
+          <text class="pv">{{industryLabels[industryIndex]}}</text>
+          <text class="chev">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item row-switch">
+      <view class="label-stack">
+        <text class="label-line opt">当前是否持有房产</text>
+        <text class="mini-hint">未操作则不记录该项</text>
+      </view>
+      <switch checked="{{hasProperty}}" bindchange="onHasPropertyChange" color="#1e3a8a" />
+    </view>
+  </view>
+
+  <button
+    class="next-main tap-active"
+    hover-class="none"
+    loading="{{submitting}}"
+    disabled="{{!canSubmit || submitting}}"
+    bindtap="onNext"
+  >
+    下一步
+  </button>
+
+  <view class="bottom-safe"></view>
+</scroll-view>

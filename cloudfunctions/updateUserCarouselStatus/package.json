@@ -1,0 +1,9 @@
+{
+  "name": "updateUserCarouselStatus",
+  "version": "1.0.0",
+  "description": "更新用户轮询页查看状态",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

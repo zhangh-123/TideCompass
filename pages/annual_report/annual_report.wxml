@@ -1,0 +1,106 @@
+<view class="page">
+  <scroll-view class="main" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="card year-card">
+      <text class="label">统计年份</text>
+      <picker mode="selector" range="{{yearLabels}}" value="{{yearIndex}}" bindchange="onYearPick">
+        <view class="picker-trigger">
+          <text class="picker-text">{{selectedYear}} 年</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view wx:if="{{loading}}" class="card muted">
+      <text>正在生成报告…</text>
+    </view>
+
+    <block wx:elif="{{loadError}}">
+      <view class="card muted">
+        <text>{{loadError}}</text>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="card">
+        <button class="share-btn" loading="{{sharingImage}}" disabled="{{sharingImage}}" bindtap="onShareReportImage">
+          分享报告图片
+        </button>
+      </view>
+
+      <view wx:if="{{emptyHint}}" class="card tip-card">
+        <text>{{emptyHint}}</text>
+      </view>
+
+      <view class="card">
+        <text class="section-title">收支概览</text>
+        <view class="kv-row">
+          <text class="kv-k">年度总收入</text>
+          <text class="kv-v income">{{totalIncomeFmt}} 元</text>
+        </view>
+        <view class="kv-row">
+          <text class="kv-k">年度总支出</text>
+          <text class="kv-v expense">{{totalExpenseFmt}} 元</text>
+        </view>
+        <view class="kv-row highlight">
+          <text class="kv-k">年度结余</text>
+          <text class="kv-v {{balanceClass}}">{{balanceFmt}} 元</text>
+        </view>
+      </view>
+
+      <view class="card">
+        <text class="section-title">支出结构</text>
+        <view wx:if="{{hasExpensePie}}" class="pie-wrap">
+          <ec-canvas
+            id="annual-pie"
+            class="pie-ec"
+            style="width:100%;height:100%;display:block;"
+            canvas-id="annual-pie-canvas"
+            echarts="{{ echartsLib }}"
+            ec="{{ ec }}"
+          />
+        </view>
+        <text wx:else class="muted-block">本年度暂无支出分类数据。</text>
+
+        <view wx:if="{{categoryRows.length}}" class="cat-list">
+          <view class="cat-row" wx:for="{{categoryRows}}" wx:key="category">
+            <text class="cat-name">{{item.category}}</text>
+            <text class="cat-amt">{{item.amountFmt}} 元</text>
+            <text class="cat-pct">{{item.pct}}%</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="card">
+        <text class="section-title">财务健康变化</text>
+        <text class="sub-caption">{{comparisonCaption}}</text>
+
+        <block wx:if="{{hasNetWorthComparison}}">
+          <view class="kv-row">
+            <text class="kv-k">{{startLabel}}</text>
+            <text class="kv-v">{{netWorthStartFmt}} 元</text>
+          </view>
+          <view class="kv-row">
+            <text class="kv-k">{{endLabel}}</text>
+            <text class="kv-v">{{netWorthEndFmt}} 元</text>
+          </view>
+          <view class="kv-row highlight">
+            <text class="kv-k">净值变动</text>
+            <text class="kv-v {{deltaClass}}">{{netWorthDeltaFmt}} 元</text>
+          </view>
+        </block>
+        <text wx:else class="muted-block">{{comparisonFallback}}</text>
+      </view>
+
+      <view class="card">
+        <text class="section-title">个性化建议</text>
+        <text class="suggestion">{{suggestion}}</text>
+      </view>
+    </block>
+
+    <view class="bottom-spacer" />
+  </scroll-view>
+  <canvas
+    canvas-id="share-annual-canvas"
+    style="width:500px;height:800px;position:fixed;left:-9999px;top:-9999px;"
+  />
+</view>

@@ -1,0 +1,104 @@
+<view class="page">
+  <view class="card" wx:if="{{!isVip}}">
+    <text class="title">会员专属</text>
+    <text class="desc">压力测试仅对会员开放，开通后可使用事件驱动的未来现金流模拟。</text>
+    <button class="vip-btn" bindtap="goVip">去开通会员</button>
+  </view>
+
+  <block wx:else>
+    <view class="card">
+      <text class="title">当前净资产</text>
+      <text class="big">{{initialAssetsFmt}}</text>
+      <text class="sub">来自 balance_snapshot 最近快照</text>
+    </view>
+
+    <view class="card">
+      <text class="title">体检提取的未来事件（12个月内）</text>
+      <checkbox-group bindchange="onTimelineSelectChange">
+        <label class="ev-row" wx:for="{{timelineEvents}}" wx:key="id">
+          <view class="ev-main">
+            <text class="ev-title">{{item.title}}</text>
+            <text class="ev-sub">{{item.subtitle}}</text>
+          </view>
+          <checkbox value="{{item.id}}" checked="{{selectedEventIdSet[item.id]}}" />
+        </label>
+      </checkbox-group>
+      <text class="sub" wx:if="{{!timelineEvents.length}}">暂无</text>
+    </view>
+
+    <view class="card">
+      <text class="title">手动添加额外事件</text>
+      <view class="inline-grid">
+        <view>
+          <text class="label">月份(1-12)</text>
+          <input class="input" type="number" data-key="customMonthInput" value="{{customMonthInput}}" bindinput="onInput" />
+        </view>
+        <view>
+          <text class="label">金额(元)</text>
+          <input class="input" type="digit" data-key="customAmountInput" value="{{customAmountInput}}" bindinput="onInput" />
+        </view>
+      </view>
+      <radio-group class="radio-row" bindchange="onCustomTypeChange">
+        <label><radio value="expense" checked="{{customType==='expense'}}" />支出</label>
+        <label><radio value="income" checked="{{customType==='income'}}" />收入</label>
+      </radio-group>
+      <button class="run-btn" bindtap="addCustomEvent">添加事件</button>
+      <view class="custom-list" wx:if="{{customEvents.length}}">
+        <view class="custom-item" wx:for="{{customEvents}}" wx:key="id">
+          <text class="custom-text">{{item.title}}</text>
+          <text class="custom-del" data-id="{{item.id}}" bindtap="removeCustomEvent">删除</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="title">模拟参数</text>
+      <view class="inline-grid">
+        <view>
+          <text class="label">月正常收入</text>
+          <input class="input" type="digit" data-key="monthlyIncomeInput" value="{{monthlyIncomeInput}}" bindinput="onInput" />
+        </view>
+        <view>
+          <text class="label">月正常支出</text>
+          <input class="input" type="digit" data-key="monthlyExpenseInput" value="{{monthlyExpenseInput}}" bindinput="onInput" />
+        </view>
+      </view>
+
+      <text class="label">收入减少比例（0~100）</text>
+      <input class="input" type="digit" data-key="incomeReducePctInput" value="{{incomeReducePctInput}}" bindinput="onInput" />
+      <view class="inline-grid">
+        <view>
+          <text class="label">开始月份</text>
+          <input class="input" type="number" data-key="incomeReduceStartMonthInput" value="{{incomeReduceStartMonthInput}}" bindinput="onInput" />
+        </view>
+        <view>
+          <text class="label">持续月数</text>
+          <input class="input" type="number" data-key="incomeReduceDurationInput" value="{{incomeReduceDurationInput}}" bindinput="onInput" />
+        </view>
+      </view>
+
+      <view class="inline-grid">
+        <view>
+          <text class="label">一次性支出金额</text>
+          <input class="input" type="digit" data-key="oneOffExpenseAmountInput" value="{{oneOffExpenseAmountInput}}" bindinput="onInput" />
+        </view>
+        <view>
+          <text class="label">所在月份</text>
+          <input class="input" type="number" data-key="oneOffExpenseMonthInput" value="{{oneOffExpenseMonthInput}}" bindinput="onInput" />
+        </view>
+      </view>
+      <button class="run-btn" loading="{{running}}" disabled="{{running}}" bindtap="runSimulation">运行模拟</button>
+    </view>
+
+    <view class="card">
+      <text class="title">模拟结果（未来12个月）</text>
+      <text class="result">{{simResultHint}}</text>
+      <view class="series-list" wx:if="{{simSeries.length}}">
+        <view class="series-item" wx:for="{{simSeries}}" wx:key="index">
+          <text>第{{item.month}}个月</text>
+          <text>{{item.cashFmt}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

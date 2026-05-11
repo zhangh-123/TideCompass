@@ -1,0 +1,9 @@
+{
+  "name": "getDebtRoute",
+  "version": "1.0.0",
+  "description": "负债罗盘偿债路线计算",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

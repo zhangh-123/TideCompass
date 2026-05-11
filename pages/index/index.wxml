@@ -1,0 +1,87 @@
+<view class="home-page">
+  <scroll-view class="home-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="welcome-card">
+      <text class="welcome-title">欢迎回来，{{nickname}}</text>
+      <text class="welcome-date">{{todayText}}</text>
+    </view>
+
+    <view class="section-title">财务健康诊断</view>
+    <view class="metrics-grid">
+      <view class="metric-card" bindtap="goBalanceSheet">
+        <text class="metric-label">家庭净资产</text>
+        <text class="metric-value tone-{{netWorthTone}}">{{netWorthText}}</text>
+        <text class="metric-link">查看资产负债表 →</text>
+      </view>
+      <view class="metric-card" bindtap="goTransactions">
+        <text class="metric-label">月度现金流</text>
+        <text class="metric-value tone-{{monthCashflowTone}}">{{monthCashflowText}}</text>
+        <text class="metric-link">查看流水明细 →</text>
+      </view>
+      <view class="metric-card full" bindtap="goDebtCompass">
+        <text class="metric-label">债务健康分</text>
+        <text class="metric-value tone-{{debtHealthTone}}">{{debtHealthScoreText}}</text>
+        <text class="metric-sub">{{debtCompassSubtitle}}</text>
+        <text class="metric-link">进入负债罗盘 →</text>
+      </view>
+    </view>
+
+    <view class="section-title">近期预警</view>
+    <scroll-view wx:if="{{hasWarning}}" class="warn-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="warn-row">
+        <view class="warn-card" wx:for="{{warnings}}" wx:key="index" data-jump="{{item.jump}}" bindtap="onWarningTap">
+          <text class="warn-text">{{item.text}}</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view wx:else class="warn-empty">
+      <text>暂无近期重大财务事件</text>
+    </view>
+
+    <view class="section-title">紧急工具</view>
+    <view class="emergency-card stress" bindtap="goStressTest">
+      <text wx:if="{{stressVipOnly}}" class="vip-badge">会员专享</text>
+      <text class="emg-title">现金流压力测试</text>
+      <text class="emg-sub">失业能撑几个月？</text>
+      <text class="emg-action">立即测试 →</text>
+    </view>
+
+    <view class="emergency-card debt" bindtap="goDebtCompass">
+      <text class="emg-title">负债罗盘</text>
+      <text class="emg-sub">{{debtCompassSubtitle}}</text>
+      <text class="emg-action">查看偿债路线 →</text>
+    </view>
+
+    <view class="section-title">日常管理</view>
+    <view class="daily-grid">
+      <view class="daily-item" bindtap="goAdd">记一笔</view>
+      <view class="daily-item" bindtap="goTransactions">流水</view>
+      <view class="daily-item" bindtap="goBalanceSheet">资产负债表</view>
+      <view class="daily-item" bindtap="goAnnualReport">年度报告</view>
+    </view>
+
+    <view wx:if="{{showAdminEntry}}" class="admin-entry-wrap">
+      <button class="admin-entry-btn" size="mini" bindtap="goAdmin">后台 · 用户管理</button>
+    </view>
+
+    <view class="spacer"></view>
+  </scroll-view>
+
+  <view class="tabbar">
+    <view class="tab active">
+      <text class="tab-icon">🏠</text>
+      <text class="tab-text">首页</text>
+    </view>
+    <view class="tab" bindtap="goTransactions">
+      <text class="tab-icon">🧾</text>
+      <text class="tab-text">记账</text>
+    </view>
+    <view class="tab" bindtap="goDebtCompass">
+      <text class="tab-icon">🧭</text>
+      <text class="tab-text">负债罗盘</text>
+    </view>
+    <view class="tab" bindtap="goProfile">
+      <text class="tab-icon">👤</text>
+      <text class="tab-text">我的</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "资产负债表",
+  "usingComponents": {
+    "ec-canvas": "../../components/ec-canvas/ec-canvas"
+  }
+}

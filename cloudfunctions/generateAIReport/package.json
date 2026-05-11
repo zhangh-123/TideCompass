@@ -1,0 +1,9 @@
+{
+  "name": "generateAIReport",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "latest",
+    "wx-server-sdk": "~3.0.1"
+  }
+}

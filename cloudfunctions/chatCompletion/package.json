@@ -1,0 +1,10 @@
+{
+  "name": "chatCompletion",
+  "version": "1.0.0",
+  "description": "财务体检对话大模型补全",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "latest",
+    "wx-server-sdk": "~3.0.1"
+  }
+}

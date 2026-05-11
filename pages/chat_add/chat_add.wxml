@@ -1,0 +1,37 @@
+<view class="shell">
+  <view class="top-bar">
+    <text class="title-text">一句话记账（规则识别）</text>
+  </view>
+
+  <scroll-view
+    class="chat"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    scroll-with-animation
+    scroll-into-view="{{scrollIntoView}}"
+  >
+    <block wx:for="{{messages}}" wx:key="id">
+      <view id="msg-{{item.id}}" class="msg-row {{item.role}}">
+        <view class="bubble">{{item.content}}</view>
+      </view>
+    </block>
+    <view id="chat-end" class="chat-end" />
+  </scroll-view>
+
+  <view class="composer safe-bottom">
+    <textarea
+      class="composer-input"
+      placeholder="例如：打车花了35、今天发工资12000"
+      maxlength="800"
+      auto-height
+      cursor-spacing="16"
+      show-confirm-bar="{{false}}"
+      value="{{draft}}"
+      bindinput="onDraftInput"
+    />
+    <button class="send-btn" type="primary" bindtap="onSend" disabled="{{sending}}">
+      发送
+    </button>
+  </view>
+</view>

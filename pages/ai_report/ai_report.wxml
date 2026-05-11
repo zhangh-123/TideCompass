@@ -1,0 +1,36 @@
+<view class="page">
+  <view class="card" wx:if="{{!isVip}}">
+    <text class="title">会员专属</text>
+    <text class="desc">AI个性化报告仅对会员开放。</text>
+    <button class="btn" bindtap="goVip">去开通会员</button>
+  </view>
+
+  <block wx:else>
+    <view class="card">
+      <text class="title">方案信息</text>
+      <text class="line">方案名称：{{planName}}</text>
+      <text class="line">参数摘要：失业{{summary.unemploymentMonths}}个月，支出下降{{summary.expenseReducePct}}%，新收入{{summary.newMonthlyIncome}}元</text>
+      <button class="btn" bindtap="onGenerate" loading="{{generating}}">生成AI诊断报告</button>
+      <button class="btn secondary" bindtap="onShareReportImage" loading="{{sharingImage}}" disabled="{{sharingImage}}">
+        分享报告图片
+      </button>
+    </view>
+
+    <view class="card" wx:if="{{reportHtml}}">
+      <view class="head-row">
+        <text class="title">报告内容</text>
+        <text class="sub" wx:if="{{usedFallback}}">（降级版）</text>
+      </view>
+      <rich-text nodes="{{reportHtml}}"></rich-text>
+      <view class="actions">
+        <button class="small" bindtap="onSaveLocal">保存</button>
+        <button class="small" bindtap="onCopy">复制</button>
+        <button class="small" open-type="share">分享</button>
+      </view>
+    </view>
+  </block>
+  <canvas
+    canvas-id="share-ai-canvas"
+    style="width:500px;height:800px;position:fixed;left:-9999px;top:-9999px;"
+  />
+</view>

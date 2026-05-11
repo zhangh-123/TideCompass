@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "年度财务总结",
+  "usingComponents": {
+    "ec-canvas": "../../components/ec-canvas/ec-canvas"
+  }
+}

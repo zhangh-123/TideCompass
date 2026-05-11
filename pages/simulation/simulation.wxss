@@ -1,0 +1,21 @@
+.page { min-height: 100vh; padding: 24rpx; box-sizing: border-box; background: #f4f7fb; }
+.card { background: #fff; border: 1rpx solid #e5e7eb; border-radius: 16rpx; padding: 22rpx; margin-bottom: 18rpx; }
+.title { display:block; font-size: 30rpx; font-weight: 600; color: #0f172a; margin-bottom: 12rpx; }
+.desc { display:block; color: #475569; line-height: 1.5; font-size: 25rpx; }
+.field { margin-bottom: 12rpx; }
+.field text { display:block; margin-bottom: 6rpx; font-size: 24rpx; color: #334155; }
+.input,.picker { background:#f8fafc; border:1rpx solid #e2e8f0; border-radius:10rpx; padding:14rpx 16rpx; font-size:26rpx; }
+.btn-row { display:flex; gap: 14rpx; margin-top: 8rpx; }
+.run-btn,.save-btn,.vip-btn { flex:1; border-radius: 12rpx; }
+.run-btn { background:#2563eb !important; color:#fff !important; }
+.save-btn { background:#059669 !important; color:#fff !important; }
+.chart-box { width:100%; height:420rpx; position: relative; }
+.chart-ec { width:100%; height:100%; }
+.head-line { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.plan-row { display:flex; justify-content: space-between; align-items:center; gap:10rpx; padding: 12rpx 0; border-bottom:1rpx solid #f1f5f9; }
+.plan-row:last-child { border-bottom:none; }
+.plan-main { flex:1; min-width:0; }
+.sub { display:block; color:#94a3b8; font-size: 22rpx; margin-top: 4rpx; }
+.plan-actions { display:flex; gap:8rpx; }
+.small { background:#eff6ff !important; color:#1d4ed8 !important; font-size: 22rpx !important; }
+.small.danger { background:#fef2f2 !important; color:#dc2626 !important; }

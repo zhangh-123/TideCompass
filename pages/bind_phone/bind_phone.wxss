@@ -1,0 +1,164 @@
+.bind-root {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 40rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'PingFang SC',
+    'Source Han Sans SC',
+    'Noto Sans SC',
+    sans-serif;
+}
+
+.guide-text {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 40rpx;
+}
+
+.form-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  border: 1rpx solid #e2e8f0;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  max-width: 686rpx;
+  margin: 0 auto;
+}
+
+.field-label {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 16rpx;
+}
+
+.req {
+  color: #f87171;
+  margin-right: 4rpx;
+}
+
+.merge-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #fff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.merge-row.is-focus {
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 4rpx rgba(30, 58, 138, 0.08);
+}
+
+.merge-input {
+  flex: 1;
+  min-width: 0;
+  height: 96rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.ph {
+  color: #94a3b8;
+}
+
+.code-btn {
+  flex-shrink: 0;
+  margin: 0 !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  padding: 0 28rpx !important;
+  font-size: 26rpx !important;
+  font-weight: 500;
+  color: #1e3a8a !important;
+  background: rgba(30, 58, 138, 0.1) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  border-left: 1rpx solid #e2e8f0 !important;
+}
+
+.code-btn::after {
+  border: none !important;
+}
+
+.code-btn[disabled] {
+  color: #94a3b8 !important;
+  background: #f1f5f9 !important;
+}
+
+.field-gap {
+  height: 36rpx;
+}
+
+.solo-field {
+  border: 2rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.solo-field.is-focus {
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 4rpx rgba(30, 58, 138, 0.08);
+}
+
+.solo-input {
+  width: 100%;
+  height: 96rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.field-error {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #f87171;
+  line-height: 1.4;
+}
+
+.submit-btn {
+  margin-top: 48rpx;
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+}
+
+.submit-btn::after {
+  border: none;
+}
+
+.submit-btn[disabled] {
+  background: #cbd5e1 !important;
+  color: #ffffff !important;
+}
+
+.tap-active:active {
+  transform: scale(0.99);
+  opacity: 0.94;
+}

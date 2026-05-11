@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/bind_phone/bind_phone",
+    "pages/profile/profile",
+    "pages/carousel/carousel",
+    "pages/assessment/assessment",
+    "pages/report_generating/report_generating",
+    "pages/report/report",
+    "pages/index/index",
+    "pages/debt_compass/debt_compass",
+    "pages/admin/admin",
+    "pages/add_transaction/add_transaction",
+    "pages/chat_add/chat_add",
+    "pages/transactions/transactions",
+    "pages/balance/balance",
+    "pages/annual_report/annual_report",
+    "pages/budget/budget",
+    "pages/upload/upload",
+    "pages/vip/vip",
+    "pages/stress_test/stress_test",
+    "pages/simulation/simulation",
+    "pages/ai_report/ai_report"
+  ],
+  "window": {
+    "navigationBarTitleText": "财富罗盘",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

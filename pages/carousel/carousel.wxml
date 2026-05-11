@@ -1,0 +1,41 @@
+<view class="carousel-page">
+  <button class="skip-btn" hover-class="none" bindtap="onSkip" disabled="{{saving}}">跳过</button>
+
+  <swiper
+    class="hero-swiper"
+    current="{{current}}"
+    indicator-dots="{{false}}"
+    circular="{{false}}"
+    autoplay="{{false}}"
+    bindchange="onSwiperChange"
+  >
+    <block wx:for="{{slides}}" wx:key="index">
+      <swiper-item>
+        <view class="slide">
+          <text class="slide-icon">{{item.icon}}</text>
+          <text class="slide-title">{{item.title}}</text>
+          <text class="slide-sub">{{item.sub}}</text>
+
+          <button
+            wx:if="{{index === slides.length - 1}}"
+            class="start-btn"
+            hover-class="none"
+            loading="{{saving}}"
+            disabled="{{saving}}"
+            bindtap="onStart"
+          >
+            开始免费财务体检
+          </button>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view class="dots">
+    <view
+      wx:for="{{slides}}"
+      wx:key="index"
+      class="dot {{current === index ? 'active' : ''}}"
+    ></view>
+  </view>
+</view>

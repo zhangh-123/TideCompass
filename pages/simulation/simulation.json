@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "现金流模拟",
+  "usingComponents": {
+    "ec-canvas": "../../components/ec-canvas/ec-canvas"
+  }
+}

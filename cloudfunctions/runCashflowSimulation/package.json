@@ -1,0 +1,9 @@
+{
+  "name": "runCashflowSimulation",
+  "version": "1.0.0",
+  "description": "现金流压力测试模拟",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

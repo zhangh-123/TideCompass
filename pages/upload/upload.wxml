@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="title-card">
+    <text class="title">上传银行流水或资产截图</text>
+    <text class="sub">支持图片、CSV、XLSX。解析后可勾选导入流水或资产负债表。</text>
+  </view>
+
+  <view class="actions">
+    <button class="btn" bindtap="chooseImage">上传图片</button>
+    <button class="btn" bindtap="chooseFile">上传文件</button>
+  </view>
+
+  <view class="card" wx:if="{{uploadItems.length}}">
+    <text class="card-title">已上传文件</text>
+    <block wx:for="{{uploadItems}}" wx:key="fileID">
+      <view class="file-row">
+        <view class="file-main">
+          <text class="file-name">{{item.fileName}}</text>
+          <text class="file-id">{{item.fileID}}</text>
+        </view>
+        <button class="mini" size="mini" data-fileid="{{item.fileID}}" data-filename="{{item.fileName}}" bindtap="startParse" loading="{{parsing && parsingFileID===item.fileID}}">开始解析</button>
+      </view>
+    </block>
+  </view>
+
+  <view class="card" wx:if="{{parseStatusText}}">
+    <text class="status">{{parseStatusText}}</text>
+  </view>
+
+  <view class="card" wx:if="{{resultKind==='transactions' && parsedTransactions.length}}">
+    <text class="card-title">识别到的交易记录（{{parsedTransactions.length}}）</text>
+    <block wx:for="{{parsedTransactions}}" wx:key="index">
+      <view class="row">
+        <checkbox class="ck" checked="{{item.checked}}" data-kind="transactions" data-index="{{index}}" bindtap="toggleItem" />
+        <view class="row-main">
+          <text class="row-line">{{item.date}}｜{{item.type==='income'?'收入':'支出'}}｜{{item.category}}｜{{item.amount}}元</text>
+          <text class="row-sub">{{item.description}}</text>
+        </view>
+      </view>
+    </block>
+    <button class="import-btn" bindtap="importTransactions" loading="{{importing}}">导入到记账</button>
+  </view>
+
+  <view class="card" wx:if="{{resultKind==='assets' && parsedAssets.length}}">
+    <text class="card-title">识别到的资产项（{{parsedAssets.length}}）</text>
+    <block wx:for="{{parsedAssets}}" wx:key="index">
+      <view class="row">
+        <checkbox class="ck" checked="{{item.checked}}" data-kind="assets" data-index="{{index}}" bindtap="toggleItem" />
+        <view class="row-main">
+          <text class="row-line">{{item.name}}｜{{item.value}}元</text>
+        </view>
+      </view>
+    </block>
+    <button class="import-btn" bindtap="importAssets" loading="{{importing}}">导入到资产负债表</button>
+  </view>
+</view>

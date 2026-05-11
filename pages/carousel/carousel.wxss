@@ -1,0 +1,100 @@
+.carousel-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 28rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  position: relative;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Source Han Sans SC', 'Noto Sans SC', sans-serif;
+}
+
+.skip-btn {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  z-index: 10;
+  margin: 0;
+  height: 56rpx;
+  line-height: 56rpx;
+  border-radius: 16rpx;
+  padding: 0 22rpx;
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+  font-size: 24rpx !important;
+  border: none !important;
+}
+
+.skip-btn::after { border: none !important; }
+
+.hero-swiper {
+  height: calc(100vh - 160rpx);
+}
+
+.slide {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24rpx 20rpx;
+  box-sizing: border-box;
+}
+
+.slide-icon {
+  font-size: 88rpx;
+  line-height: 1;
+  margin-bottom: 40rpx;
+}
+
+.slide-title {
+  font-size: 44rpx;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 24rpx;
+}
+
+.slide-sub {
+  font-size: 28rpx;
+  line-height: 1.65;
+  color: #64748b;
+  max-width: 620rpx;
+}
+
+.start-btn {
+  margin-top: 56rpx;
+  width: 100%;
+  max-width: 620rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+}
+
+.start-btn::after { border: none; }
+
+.dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 6rpx;
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.dot.active {
+  width: 28rpx;
+  border-radius: 999rpx;
+  background: #1e3a8a;
+}

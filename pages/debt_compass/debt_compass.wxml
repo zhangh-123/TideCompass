@@ -1,0 +1,41 @@
+<view class="debt-page">
+  <view class="head-card">
+    <text class="title">负债罗盘</text>
+    <text class="summary">{{summary}}</text>
+    <radio-group class="sort-toggle" bindchange="onSortModeChange">
+      <label><radio value="avalanche" checked="{{sortMode==='avalanche'}}" />雪崩法(APR)</label>
+      <label><radio value="maturity" checked="{{sortMode==='maturity'}}" />按到期日</label>
+    </radio-group>
+  </view>
+
+  <view class="urgent-wrap" wx:if="{{urgentList.length}}">
+    <text class="urgent-title">⚠️ 紧急债务（3个月内到期）</text>
+    <view class="row urgent" wx:for="{{urgentList}}" wx:key="_id">
+      <view class="left">
+        <text class="name">{{item.name}}</text>
+        <text class="meta">{{item.remainingText}}</text>
+      </view>
+      <view class="right">
+        <text class="countdown-tag">即将到期</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="list-wrap" wx:if="{{list.length}}">
+    <view class="row" wx:for="{{list}}" wx:key="_id">
+      <view class="left">
+        <text class="name">{{item.name}}</text>
+        <text class="meta">年化利率 {{item.aprText}} · {{item.remainingText}}</text>
+        <text class="meta">{{item.urgencyScoreText}}</text>
+      </view>
+      <view class="right">
+        <text class="amount {{item.high ? 'high' : ''}}">{{item.balanceText}}</text>
+        <text wx:if="{{item.urgent}}" class="countdown-tag">倒计时≤3月</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>
+    <text>暂无</text>
+  </view>
+</view>

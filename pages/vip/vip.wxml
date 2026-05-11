@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="hero card">
+    <text class="title">会员订阅</text>
+    <text class="desc">开通会员后可解锁：无限次动态体检、压力测试、现金流模拟、AI深度报告等高级能力。</text>
+    <text class="status" wx:if="{{vipLoaded}}">
+      {{isVip ? ('当前会员有效期至：' + vipExpireDate) : '当前为普通用户'}}
+    </text>
+  </view>
+
+  <view class="card rights">
+    <text class="sec-title">会员权益</text>
+    <text class="item">- 无限次动态体检与趋势追踪</text>
+    <text class="item">- 压力测试（高风险场景预演）</text>
+    <text class="item">- 现金流模拟与方案对比</text>
+    <text class="item">- AI个性化深度报告</text>
+  </view>
+
+  <view class="card plans">
+    <text class="sec-title">订阅套餐</text>
+
+    <view class="plan-row">
+      <view>
+        <text class="plan-title">月度会员</text>
+        <text class="plan-sub">连续订阅可随时取消</text>
+      </view>
+      <view class="plan-right">
+        <text class="price">￥{{monthlyPrice}}</text>
+        <button class="buy-btn" bindtap="buyMonthly" loading="{{paying && currentPlan==='monthly'}}">购买</button>
+      </view>
+    </view>
+
+    <view class="plan-row">
+      <view>
+        <text class="plan-title">年度会员</text>
+        <text class="plan-sub">性价比更高，适合长期规划</text>
+      </view>
+      <view class="plan-right">
+        <text class="price">￥{{yearlyPrice}}</text>
+        <button class="buy-btn" bindtap="buyYearly" loading="{{paying && currentPlan==='yearly'}}">购买</button>
+      </view>
+    </view>
+  </view>
+</view>

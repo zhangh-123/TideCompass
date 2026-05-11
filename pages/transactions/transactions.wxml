@@ -1,0 +1,57 @@
+<wxs module="slide">
+var pick = function (m, k) {
+  if (!m || k === undefined || k === null || k === '') return 0
+  var v = m[k]
+  return v === undefined || v === null ? 0 : v
+}
+module.exports.pick = pick
+</wxs>
+
+<view class="page">
+  <view class="month-summary card">
+    <view class="sum-row">
+      <text class="sum-label">本月收入</text>
+      <text class="sum-val inc">+{{monthIncomeFmt}}</text>
+    </view>
+    <view class="sum-row">
+      <text class="sum-label">本月支出</text>
+      <text class="sum-val exp">-{{monthExpenseFmt}}</text>
+    </view>
+    <view class="sum-row bold">
+      <text class="sum-label">本月结余</text>
+      <text class="sum-val {{monthBalance >= 0 ? 'inc' : 'exp'}}">{{monthBalanceFmt}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <block wx:for="{{flatList}}" wx:key="rowKey">
+      <view wx:if="{{item.kind === 'header'}}" class="date-head">{{item.date}}</view>
+
+      <view wx:if="{{item.kind === 'row'}}" class="swipe-wrap">
+        <view class="swipe-delete" bindtap="onDeleteRow" data-id="{{item._id}}">删除</view>
+        <view
+          class="swipe-front"
+          style="transform: translateX({{slide.pick(slideMap, item._id)}}px)"
+          bindtouchstart="onRowTouchStart"
+          catchtouchmove="onRowTouchMove"
+          bindtouchend="onRowTouchEnd"
+          data-id="{{item._id}}"
+        >
+          <view class="row-main">
+            <view class="cat-badge">{{item.categoryShort}}</view>
+            <view class="row-text">
+              <text class="cat-name">{{item.category}}</text>
+              <text class="note" wx:if="{{item.note}}">{{item.note}}</text>
+            </view>
+            <text class="amt {{item.type === 'income' ? 'inc' : 'exp'}}">
+              {{item.type === 'income' ? '+' : '-'}}{{item.amountFmt}}
+            </text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{!flatList.length}}" class="empty">暂无流水</view>
+    <view class="scroll-bottom" />
+  </scroll-view>
+</view>

@@ -1,0 +1,12 @@
+<view class="page">
+  <view class="card">
+    <text class="title">正在生成报告</text>
+    <text class="sub">我们正在整理你的对话与时间事件，请稍候…</text>
+    <view class="dot-wrap">
+      <view class="dot d1"></view>
+      <view class="dot d2"></view>
+      <view class="dot d3"></view>
+    </view>
+    <text class="hint">{{hint}}</text>
+  </view>
+</view>

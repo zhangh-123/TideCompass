@@ -1,0 +1,10 @@
+{
+  "name": "extractTimelineEvents",
+  "version": "1.0.0",
+  "description": "从体检对话提取时间线事件并入库",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "latest",
+    "wx-server-sdk": "~3.0.1"
+  }
+}

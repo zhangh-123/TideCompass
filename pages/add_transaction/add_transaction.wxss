@@ -1,0 +1,81 @@
+.page {
+  min-height: 100vh;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #f5f7fa;
+}
+
+.field {
+  margin-bottom: 36rpx;
+}
+
+.label {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 14rpx;
+}
+
+.picker-val {
+  height: 92rpx;
+  line-height: 92rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  border: 1rpx solid #e5e5e5;
+  font-size: 30rpx;
+}
+
+.type-switch {
+  display: flex;
+  gap: 20rpx;
+}
+
+.type-btn {
+  flex: 1;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  background: #fff;
+  color: #64748b;
+  border: 1rpx solid #e2e8f0;
+}
+
+.type-btn.active.exp {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.type-btn.active.inc {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.input {
+  height: 92rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  border: 1rpx solid #e5e5e5;
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+.budget-mini-tip {
+  margin-top: 8rpx;
+  margin-bottom: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 24rpx;
+  color: #991b1b;
+  background: #fef2f2;
+  border-radius: 12rpx;
+  border: 1rpx solid #fecaca;
+  line-height: 1.45;
+}
+
+.save-btn {
+  margin-top: 48rpx;
+  border-radius: 12rpx;
+}

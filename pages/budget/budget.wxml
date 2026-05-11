@@ -1,0 +1,46 @@
+<view class="page">
+  <scroll-view class="main" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="card head-card">
+      <view class="month-row">
+        <button class="nav-btn" bindtap="prevMonth" disabled="{{monthNavDisabledPrev}}">‹</button>
+        <text class="month-title">{{monthTitle}}</text>
+        <button class="nav-btn" bindtap="nextMonth" disabled="{{monthNavDisabledNext}}">›</button>
+      </view>
+      <text class="subtle">按自然月统计已支出；预算每月单独保存，历史支出可追溯。</text>
+    </view>
+
+    <view class="card">
+      <text class="card-title">预算超支提醒</text>
+      <text class="subtle block">记账后若某类支出首次超过当月预算，将向您推送一条订阅消息（需在真机授权）。</text>
+      <button class="sub-btn" bindtap="onRequestSubscribe">订阅「预算超支提醒」</button>
+    </view>
+
+    <view class="card">
+      <view class="row head-row">
+        <text class="col cat">类别</text>
+        <text class="col spent">本月已支出</text>
+        <text class="col cap">月预算</text>
+      </view>
+
+      <block wx:for="{{rows}}" wx:key="category">
+        <view class="row data-row">
+          <text class="col cat">{{item.category}}</text>
+          <text class="col spent {{item.overClass}}">{{item.spentFmt}}</text>
+          <view class="col cap">
+            <input
+              class="cap-input"
+              type="digit"
+              placeholder="不设限"
+              value="{{item.budgetInput}}"
+              data-category="{{item.category}}"
+              bindinput="onBudgetInput"
+            />
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <button class="save-bar" type="primary" loading="{{saving}}" bindtap="onSave">保存本月预算</button>
+    <view class="bottom-spacer" />
+  </scroll-view>
+</view>

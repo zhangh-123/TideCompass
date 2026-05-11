@@ -1,0 +1,9 @@
+{
+  "name": "adminUsers",
+  "version": "1.0.0",
+  "description": "管理员：用户列表与删除（校验手机号）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}
