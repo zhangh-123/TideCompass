@@ -394,6 +394,162 @@
   box-sizing: border-box;
 }
 
+.review-modal-table {
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-table-scroll {
+  flex: 1;
+  min-height: 200rpx;
+  max-height: 52vh;
+  margin-bottom: 12rpx;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  background: #f8fafc;
+  box-sizing: border-box;
+  /* 避免最后一列贴边难点 */
+  padding-right: 4rpx;
+}
+
+/** 表头与数据行共用列宽；缩进只加在「名称」列上，勿用整行 margin，否则会横向溢出裁掉操作列 */
+.review-table-grid {
+  display: grid;
+  grid-template-columns: minmax(100rpx, 1fr) 148rpx 104rpx 132rpx;
+  gap: 8rpx;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.review-table-head.review-table-grid {
+  padding: 12rpx 10rpx 12rpx 14rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2rpx solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.th-name {
+  min-width: 0;
+}
+
+.th-amt {
+  text-align: right;
+}
+
+.th-type {
+  text-align: center;
+}
+
+.th-act {
+  text-align: right;
+}
+
+.review-table-row {
+  background: #ffffff;
+}
+
+.review-table-row-inner {
+  padding: 10rpx 10rpx 10rpx 12rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.review-table-row:last-child .review-table-row-inner {
+  border-bottom: none;
+}
+
+.td-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  box-sizing: border-box;
+}
+
+.td-amt-cell {
+  min-width: 0;
+}
+
+.td-type-cell {
+  min-width: 0;
+}
+
+.td-amt-input {
+  width: 100%;
+  text-align: right;
+}
+
+.review-picker-face {
+  font-size: 22rpx;
+  color: #1e293b;
+  padding: 10rpx 6rpx;
+  border-radius: 8rpx;
+  background: #f1f5f9;
+  text-align: center;
+}
+
+.td-act {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6rpx;
+  min-width: 0;
+  padding-right: 4rpx;
+}
+
+.review-cell-input {
+  width: 100%;
+  min-height: 64rpx;
+  padding: 8rpx 10rpx;
+  box-sizing: border-box;
+  font-size: 26rpx;
+  color: #1e293b;
+  background: #ffffff;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 10rpx;
+}
+
+.rollup-tag {
+  flex-shrink: 0;
+  font-size: 18rpx;
+  color: #b45309;
+  background: #fffbeb;
+  padding: 2rpx 8rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #fcd34d;
+}
+
+.row-mini {
+  font-size: 22rpx;
+  color: #2563eb;
+  padding: 6rpx 4rpx;
+  line-height: 1.35;
+}
+
+.row-mini.danger {
+  color: #b91c1c;
+}
+
+.review-add-row {
+  margin: 0 0 14rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 26rpx;
+  color: #1e3a8a;
+  background: #eff6ff;
+  border-radius: 12rpx;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .review-title {
   display: block;
   font-size: 30rpx;
@@ -412,20 +568,6 @@
   background: #f1f5f9;
   border-radius: 12rpx;
   border: 1rpx solid #e2e8f0;
-}
-
-.review-input {
-  width: 100%;
-  min-height: 260rpx;
-  max-height: 520rpx;
-  padding: 16rpx;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 2rpx solid #e2e8f0;
-  border-radius: 12rpx;
-  line-height: 1.5;
 }
 
 .review-actions {
@@ -531,8 +673,7 @@
   }
 
   .review-title,
-  .review-hint,
-  .review-input {
+  .review-hint {
     color: #e2e8f0;
   }
 
@@ -542,8 +683,38 @@
     color: #94a3b8;
   }
 
-  .review-input {
+  .review-table-scroll {
     background: #0f172a;
     border-color: #334155;
+  }
+
+  .review-table-head {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+  }
+
+  .review-table-row {
+    background: #1e293b;
+  }
+
+  .review-table-row-inner {
+    border-color: #334155;
+  }
+
+  .review-cell-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+  }
+
+  .review-picker-face {
+    background: #334155;
+    color: #e2e8f0;
+  }
+
+  .review-add-row {
+    background: rgba(30, 58, 138, 0.35) !important;
+    color: #e2e8f0 !important;
   }
 }

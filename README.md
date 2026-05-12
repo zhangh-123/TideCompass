@@ -7,7 +7,7 @@
 | 模块 | 说明 |
 |------|------|
 | 账号与安全 | 登录、手机号绑定；资料填写页 `profile`；「我的」中修改个人信息、退出登录（`utils/session.js`） |
-| 财务体检 / 评估 | 引导式评估、`pages/assessment`；支持多图依次 OCR，识图后弹窗会提示核对并自动清洗无关/重复句（`utils/ocrReviewText.js`）；输入框固定单行高度、对话区自动滚底；用户画像拼入 system 提示词见 `utils/assessmentUserContext.js`；对话解析见 `utils/extractHelper.js` |
+| 财务体检 / 评估 | 引导式评估、`pages/assessment`；多图依次识图后进入可编辑表格核对（结构化 JSON 提示词与解析见 `utils/visionFinancialTable.js`，结果清洗见 `utils/ocrReviewText.js`）；生成报告前可选云函数 `extractAssessmentStructured` 抽取结构化字段并与规则合并（`utils/assessmentStructuredMerge.js`）；用户画像拼入 system 提示词见 `utils/assessmentUserContext.js`；规则解析见 `utils/extractHelper.js`；大模型 HTTP 调用见云函数 `chatCompletion` |
 | 报告 | 报告生成流程、双表诊断页 `pages/report`（四维雷达 + 分数说明文案）、详情与图表（含 ECharts） |
 | 首页与导航 | `pages/index`、引导页 `carousel` |
 | 收支 | 手动记账、流水列表、对话式记账（`chat_add`） |
@@ -24,7 +24,7 @@
 
 - **客户端**：微信小程序（WXML / WXSS / JS）
 - **图表**：ECharts（`echarts`、`echarts-for-weixin`，小程序内使用 `components/ec-canvas`）
-- **服务端**：微信云开发 **云函数**（目录 `cloudfunctions/`，含记账、预算提醒、短信、订阅消息、AI 对话 `chatCompletion`、解析 `parseFile`、报告生成等）
+- **服务端**：微信云开发 **云函数**（目录 `cloudfunctions/`，含记账、预算提醒、短信、订阅消息、AI 对话 `chatCompletion`、体检结构化抽取 `extractAssessmentStructured`、解析 `parseFile`、报告生成等）
 
 ## 仓库结构（简要）
 

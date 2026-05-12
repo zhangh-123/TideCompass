@@ -112,19 +112,62 @@
       </text>
     </view>
   </view>
-  <view wx:if="{{imageReviewVisible}}" class="review-mask">
-    <view class="review-modal">
-      <text class="review-title">核对识别内容</text>
+  <view wx:if="{{imageReviewVisible}}" class="review-mask" catchtouchmove="onReviewMaskTouchMove">
+    <view class="review-modal review-modal-table">
+      <text class="review-title">核对识别结果（表格）</text>
       <text class="review-hint">
-        请对照原图确认是否准确。下方已自动去掉明显无关、客套和完全重复的句子；请再手动删掉与资产负债无关或仍重复的内容，保留与资产、负债、收支相关的条目后再点「确认并发送」。
+        AI 已尽量还原层级（汇总行下挂分项）；请对照原图修改名称、金额或类型。可添加同级/子项；删除会移除该行及其子项。完成后点「确认并发送」。
       </text>
-      <textarea
-        class="review-input"
-        maxlength="3000"
-        auto-height
-        value="{{imageReviewText}}"
-        bindinput="onImageReviewInput"
-      />
+      <scroll-view scroll-y class="review-table-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="review-table-head review-table-grid">
+          <text class="th-name">名称</text>
+          <text class="th-amt">金额(元)</text>
+          <text class="th-type">类型</text>
+          <text class="th-act">操作</text>
+        </view>
+        <block wx:for="{{imageReviewRows}}" wx:key="id">
+          <view class="review-table-row">
+            <view class="review-table-grid review-table-row-inner">
+              <view class="td-name" style="padding-left: {{item.padRpx}}rpx;">
+                <input
+                  class="review-cell-input"
+                  value="{{item.label}}"
+                  placeholder="名称"
+                  data-id="{{item.id}}"
+                  bindinput="onReviewLabelInput"
+                />
+                <text wx:if="{{item.isTotal}}" class="rollup-tag">汇总</text>
+              </view>
+              <view class="td-amt-cell">
+                <input
+                  class="review-cell-input td-amt-input"
+                  type="digit"
+                  value="{{item.amount}}"
+                  placeholder="金额"
+                  data-id="{{item.id}}"
+                  bindinput="onReviewAmountInput"
+                />
+              </view>
+              <view class="td-type-cell">
+                <picker
+                  mode="selector"
+                  range="{{reviewCategoryLabels}}"
+                  value="{{item.categoryIndex}}"
+                  data-id="{{item.id}}"
+                  bindchange="onReviewCategoryPick"
+                >
+                  <view class="review-picker-face">{{reviewCategoryLabels[item.categoryIndex]}}</view>
+                </picker>
+              </view>
+              <view class="td-act">
+                <text class="row-mini tap-blend" data-parent-id="{{item.id}}" catchtap="onAddReviewChildRow">子项</text>
+                <text class="row-mini danger tap-blend" data-id="{{item.id}}" catchtap="onDeleteReviewRow">删除</text>
+              </view>
+            </view>
+          </view>
+        </block>
+      </scroll-view>
+      <view class="review-add-row tap-blend" hover-class="none" catchtap="onAddReviewRootRow">添加同级行</view>
       <view class="review-actions">
         <button class="review-btn ghost" hover-class="none" bindtap="onCancelImageReview">取消</button>
         <button class="review-btn primary" hover-class="none" bindtap="onConfirmImageReview">确认并发送</button>

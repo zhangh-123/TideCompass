@@ -5,21 +5,59 @@ const {
   extractLiabilities,
   extractIncome,
   extractExpense,
+  estimateMonthlyIncomeTotal,
+  estimateMonthlyExpenseSum,
+  sanitizeTextForAssetExtraction,
   extractSkillAndWorry,
   strip,
   dedupeFinancialRows,
   crossDedupeAssetsLiabilities
 } = require('../../utils/extractHelper.js')
 const { sanitizeOcrReviewText } = require('../../utils/ocrReviewText.js')
+const {
+  IMAGE_TABLE_VISION_USER_PROMPT,
+  IMAGE_TABLE_VISION_SYSTEM_PROMPT,
+  parseVisionFinancialTableReply,
+  remapMergedRows,
+  annotateReviewRows,
+  serializeReviewRowsForChat,
+  rowsFromPlainFinancialLines,
+  CATEGORY_KEYS,
+  makeReviewRowId
+} = require('../../utils/visionFinancialTable.js')
+const { mergeStructuredAssessmentPayload } = require('../../utils/assessmentStructuredMerge.js')
 
 const DEFAULT_SYSTEM_PROMPT =
   '你是专业、温和的中文财务体检助手。目标是通过多轮对话收集完整财务画像并识别未来风险。必须覆盖并尽量量化这7类信息：1) 现金与存款（活期/定期/货基）2) 主要资产（房产、车辆、理财、股票基金等）3) 负债（余额、利率、月供/最低还款、到期时间）4) 稳定收入（税后月收入、是否波动）5) 固定支出（家庭刚性开销）6) 保障情况（医保/商保）7) 未来12个月已知事件（大额支出、收入变化、债务到期）。规则：若用户输入不便或信息较多，主动建议其上传银行/支付宝/微信账单或资产截图，并说明“可在输入框旁点击上传按钮进行OCR识别”；若用户提到未来事件但未给时间，必须追问时间；若金额缺失，优先追问金额或区间。只有当以上信息已覆盖，或用户明确表示“暂不清楚/没有更多可补充”时，才结束并在回复末尾明确写出：感谢您的分享，我将为您生成报告。每轮最多问2个关键问题，语气简洁自然，避免一次性长问卷。'
 
-const FINISH_SIGNAL_KEYWORDS = ['感谢您的分享，我将为您生成报告', '为您生成报告', '信息已经足够']
+/** 完整匹配或子串匹配；模型常改写为「为您生成一份…报告」导致不含连续「为您生成报告」 */
+const FINISH_SIGNAL_KEYWORDS = [
+  '感谢您的分享，我将为您生成报告',
+  '为您生成报告',
+  '信息已经足够',
+  '财务体检报告',
+  '所有关键信息已收集完毕',
+  '关键信息已收集完毕'
+]
 const REPORT_GENERATE_TIMEOUT_MS = 20000
+/** 对话结构化抽取（与 extractTimelineEvents 串行），须小于云函数 timeout */
+const STRUCTURED_EXTRACT_MS = 48000
 /** 须大于云函数 chatCompletion 内 axios 超时，否则客户端会先断开 */
 const CHAT_COMPLETION_CLIENT_MS = 45000
-const CHAT_VISION_CLIENT_MS = 50000
+const CHAT_VISION_CLIENT_MS = 70000
+/** 识图链路失败时在弹窗中追加，引导用户改用文字录入 */
+const VISION_FAIL_USER_HINT =
+  '当前图片识别有误，您也可以直接将数据通过文字发送给我，我一样可以帮您记录。'
+
+function shouldAppendVisionUserHint(failStage, errMsg) {
+  const stage = String(failStage || '')
+  const msg = String(errMsg || '')
+  if (stage.includes('调用AI识图')) return true
+  if (/AI识图超时|图片识别失败|AI未返回可确认内容|模型调用失败|模型未返回内容/i.test(msg))
+    return true
+  return false
+}
+
 const CONTINUE_ASK_PATTERNS = [
   /请问/,
   /还需要了解/,
@@ -35,9 +73,6 @@ const CONTINUE_ASK_PATTERNS = [
 const FIRST_ASSISTANT_MESSAGE =
   '您好，我是您的财务助手。能否简单说说，最近在财务或工作上最让您感到焦虑的事情是什么？'
 const QUICK_EMOJIS = ['🙂', '😄', '🙏', '💪', '📈', '💰', '🏠', '🚗', '🧾', '✅']
-const IMAGE_EXTRACT_PROMPT =
-  '请识别这张财务截图。只输出与「资产、负债、月收入、月支出」直接相关的条目，每行一条，简洁中文；带金额须写单位（元/万等）。不要客套话、不要总结段、不要重复同一句话。若看不清写「部分字段不清晰」。不要输出 JSON。'
-
 Page({
   msgSeq: 0,
 
@@ -56,7 +91,8 @@ Page({
     emojiVisible: false,
     quickEmojis: QUICK_EMOJIS,
     imageReviewVisible: false,
-    imageReviewText: ''
+    imageReviewRows: [],
+    reviewCategoryLabels: ['资产', '负债', '收入', '支出', '其他']
   },
   currentOpenId: '',
 
@@ -356,7 +392,9 @@ Page({
         .filter(Boolean)
       const chunks = segments.length ? segments : [raw]
       chunks.forEach((chunk) => {
-        extractAssets(chunk).forEach((it) => {
+        const cleaned = sanitizeTextForAssetExtraction(chunk)
+        if (!strip(cleaned)) return
+        extractAssets(cleaned).forEach((it) => {
           const subtotal = Math.round(it.value * (it.count || 1))
           pushAsset(it.type, subtotal)
         })
@@ -388,12 +426,16 @@ Page({
       })
     })
 
+    const estimatedInc = estimateMonthlyIncomeTotal(allUserText)
+    const estimatedExp = estimateMonthlyExpenseSum(allUserText)
     userTexts.forEach((txt) => {
       const inc = extractIncome(txt)
-      if (inc) payload.monthlyIncome = Math.max(payload.monthlyIncome, inc)
+      if (inc && inc < 5e6) payload.monthlyIncome = Math.max(payload.monthlyIncome, inc)
       const exp = extractExpense(txt)
-      if (exp) payload.monthlyExpense = Math.max(payload.monthlyExpense, exp)
+      if (exp && exp < 2e5) payload.monthlyExpense = Math.max(payload.monthlyExpense, exp)
     })
+    if (estimatedInc > 0) payload.monthlyIncome = Math.max(payload.monthlyIncome, estimatedInc)
+    if (estimatedExp > 0) payload.monthlyExpense = Math.max(payload.monthlyExpense, estimatedExp)
 
     ;(Array.isArray(timelineEvents) ? timelineEvents : []).forEach((ev) => {
       const amount = Number(ev && ev.amount)
@@ -401,7 +443,7 @@ Page({
       if (ev.type === 'debt_maturity') {
         pushLiability(ev.description || '债务到期', amount)
       } else if (ev.type === 'lump_sum_expense') {
-        payload.monthlyExpense = Math.max(payload.monthlyExpense, amount)
+        /* 一次性支出不计入「月经常性支出」，避免择校费等把月度现金流模型撑爆 */
       } else if (ev.type === 'asset_locked') {
         pushAsset(ev.description || '资产', amount)
       }
@@ -485,7 +527,7 @@ Page({
           : tempFiles.map((f) => f.path).filter(Boolean)) || []
       if (!paths.length) throw new Error('未选择图片')
 
-      const ocrParts = []
+      const ocrMergedRows = []
       const total = paths.length
       for (let i = 0; i < total; i += 1) {
         const path = paths[i]
@@ -533,9 +575,8 @@ Page({
             name: 'chatCompletion',
             data: {
               imageUrl: tempFileURL,
-              userPrompt: IMAGE_EXTRACT_PROMPT,
-              systemPrompt:
-                '你是财务截图识别助手。只输出与资产、负债、月收入、月支出相关的短句，每行一条，不要客套与重复，不要长总结。'
+              userPrompt: IMAGE_TABLE_VISION_USER_PROMPT,
+              systemPrompt: IMAGE_TABLE_VISION_SYSTEM_PROMPT
             }
           }),
           CHAT_VISION_CLIENT_MS,
@@ -546,25 +587,46 @@ Page({
 
         const extracted = String(body.reply || '').trim()
         if (!extracted) throw new Error('AI未返回可确认内容')
-        const tidied = sanitizeOcrReviewText(extracted) || extracted
-        ocrParts.push(`【图片 ${i + 1}：${fileName}】\n${tidied}`)
+
+        let parsedRows = parseVisionFinancialTableReply(extracted)
+        if (!parsedRows.length) {
+          const tidied = sanitizeOcrReviewText(extracted) || extracted
+          parsedRows = rowsFromPlainFinancialLines(tidied)
+        }
+        const slimRows = parsedRows.map(({ depth, padRpx, categoryIndex, ...rest }) => rest)
+        ocrMergedRows.push(...remapMergedRows(slimRows, `img${i}`))
       }
 
       wx.hideLoading()
-      const merged = ocrParts.join('\n\n')
-      const reviewBody = sanitizeOcrReviewText(merged) || merged
+      const tableRows =
+        ocrMergedRows.length > 0
+          ? annotateReviewRows(ocrMergedRows)
+          : annotateReviewRows([
+              {
+                id: makeReviewRowId(),
+                parentId: null,
+                label: '',
+                amount: '',
+                category: 'asset',
+                isTotal: false
+              }
+            ])
       this.setData({
         imageReviewVisible: true,
-        imageReviewText: reviewBody
+        imageReviewRows: tableRows
       })
       this.scrollToBottom()
     } catch (e) {
       wx.hideLoading()
       console.error(e)
       const msg = String((e && (e.message || e.errMsg)) || '图片识别失败')
+      let content = msg.slice(0, 280)
+      if (shouldAppendVisionUserHint(failStage, msg)) {
+        content = [content, VISION_FAIL_USER_HINT].join('\n\n')
+      }
       wx.showModal({
         title: `${failStage}失败`,
-        content: msg.slice(0, 200),
+        content: content.slice(0, 600),
         showCancel: false
       })
     } finally {
@@ -582,7 +644,16 @@ Page({
 
   isFinishSignalText(text) {
     const content = String(text || '')
-    return FINISH_SIGNAL_KEYWORDS.some((kw) => content.includes(kw))
+    if (!strip(content)) return false
+    if (FINISH_SIGNAL_KEYWORDS.some((kw) => content.includes(kw))) return true
+    /* 结束话术变体：感谢分享 + 承诺生成报告（中间可有修饰语） */
+    if (
+      /感谢[^。\n]{0,28}分享/.test(content) &&
+      (/为您[^。\n]{0,40}生成[^。\n]{0,48}报告/.test(content) || /生成[^。\n]{0,48}财务体检报告/.test(content))
+    ) {
+      return true
+    }
+    return false
   },
 
   hasContinueAskSignal(text) {
@@ -720,27 +791,114 @@ Page({
     this.persistDraft()
   },
 
-  onImageReviewInput(e) {
-    this.setData({ imageReviewText: e.detail.value || '' })
+  onReviewMaskTouchMove() {},
+
+  collectSubtreeIds(rootId, rows) {
+    const ids = new Set([rootId])
+    let grew = true
+    while (grew) {
+      grew = false
+      ;(rows || []).forEach((r) => {
+        if (r.parentId && ids.has(r.parentId) && !ids.has(r.id)) {
+          ids.add(r.id)
+          grew = true
+        }
+      })
+    }
+    return ids
+  },
+
+  onReviewLabelInput(e) {
+    const id = e.currentTarget.dataset.id
+    const v = e.detail.value || ''
+    const rows = this.data.imageReviewRows.map((r) => (r.id === id ? { ...r, label: v } : r))
+    this.setData({ imageReviewRows: annotateReviewRows(rows) })
+  },
+
+  onReviewAmountInput(e) {
+    const id = e.currentTarget.dataset.id
+    const v = e.detail.value || ''
+    const rows = this.data.imageReviewRows.map((r) => (r.id === id ? { ...r, amount: v } : r))
+    this.setData({ imageReviewRows: annotateReviewRows(rows) })
+  },
+
+  onReviewCategoryPick(e) {
+    const id = e.currentTarget.dataset.id
+    const idx = Number(e.detail.value)
+    const key = CATEGORY_KEYS[idx] || 'other'
+    const rows = this.data.imageReviewRows.map((r) =>
+      r.id === id ? { ...r, category: key } : r
+    )
+    this.setData({ imageReviewRows: annotateReviewRows(rows) })
+  },
+
+  onDeleteReviewRow(e) {
+    const id = e.currentTarget.dataset.id
+    const subtree = this.collectSubtreeIds(id, this.data.imageReviewRows)
+    let rows = this.data.imageReviewRows.filter((r) => !subtree.has(r.id))
+    if (!rows.length) {
+      rows = [
+        {
+          id: makeReviewRowId(),
+          parentId: null,
+          label: '',
+          amount: '',
+          category: 'asset',
+          isTotal: false
+        }
+      ]
+    }
+    this.setData({ imageReviewRows: annotateReviewRows(rows) })
+  },
+
+  onAddReviewRootRow() {
+    const row = {
+      id: makeReviewRowId(),
+      parentId: null,
+      label: '',
+      amount: '',
+      category: 'asset',
+      isTotal: false
+    }
+    this.setData({
+      imageReviewRows: annotateReviewRows(this.data.imageReviewRows.concat(row))
+    })
+  },
+
+  onAddReviewChildRow(e) {
+    const parentId = e.currentTarget.dataset.parentId
+    const row = {
+      id: makeReviewRowId(),
+      parentId,
+      label: '',
+      amount: '',
+      category: 'asset',
+      isTotal: false
+    }
+    this.setData({
+      imageReviewRows: annotateReviewRows(this.data.imageReviewRows.concat(row))
+    })
   },
 
   onCancelImageReview() {
     this.setData({
       imageReviewVisible: false,
-      imageReviewText: ''
+      imageReviewRows: []
     })
   },
 
   async onConfirmImageReview() {
-    const raw = String(this.data.imageReviewText || '').trim()
-    const text = sanitizeOcrReviewText(raw) || raw
-    if (!text) {
-      wx.showToast({ title: '请保留与资产/负债相关的条目', icon: 'none' })
+    const rows = this.data.imageReviewRows || []
+    const slim = rows.map(({ depth, padRpx, categoryIndex, ...r }) => r)
+    const hasUseful = slim.some((r) => strip(r.label) && strip(r.amount))
+    const text = serializeReviewRowsForChat(slim)
+    if (!strip(text) || !hasUseful) {
+      wx.showToast({ title: '请至少填写一行名称与金额', icon: 'none' })
       return
     }
     this.setData({
       imageReviewVisible: false,
-      imageReviewText: '',
+      imageReviewRows: [],
       sending: true
     })
     this.pushUser(this.buildImageConfirmMessage(text))
@@ -788,6 +946,27 @@ Page({
     })
   },
 
+  async buildFinalAssessmentPayload(dialogHistory, timelineEvents) {
+    const rulePayload = this.inferAssessmentPayload(dialogHistory, timelineEvents)
+    try {
+      const structRes = await this.withTimeout(
+        wx.cloud.callFunction({
+          name: 'extractAssessmentStructured',
+          data: { dialogHistory }
+        }),
+        STRUCTURED_EXTRACT_MS,
+        '结构化抽取超时'
+      )
+      const body = structRes.result || {}
+      if (body.success && body.payload) {
+        return mergeStructuredAssessmentPayload(body.payload, rulePayload)
+      }
+    } catch (err) {
+      console.warn('extractAssessmentStructured', err)
+    }
+    return rulePayload
+  },
+
   async onGenerateReport() {
     if (this.data.generating) return
     this.setData({ generating: true })
@@ -817,19 +996,30 @@ Page({
         if (u && u._id) serverUserId = String(u._id)
       } catch (e) {}
 
+      const payload = await this.buildFinalAssessmentPayload(dialogHistory, timelineEvents)
       const assessmentData = {
-        payload: this.inferAssessmentPayload(dialogHistory, timelineEvents),
+        payload,
         completedAt: Date.now(),
         ...(serverUserId ? { serverUserId } : {})
       }
       wx.setStorageSync('assessmentData', assessmentData)
       this.clearDraft()
-      wx.redirectTo({ url: '/pages/report/report?timeline=1' })
+      wx.redirectTo({ url: '/pages/report/report?timeline=1&fromAssessment=1' })
     } catch (e) {
       console.error(e)
       const msg = String((e && (e.message || e.errMsg)) || '提取时间事件失败')
       wx.showToast({ title: msg.slice(0, 18), icon: 'none' })
-      wx.redirectTo({ url: '/pages/report/report?timeline=0' })
+      try {
+        const payload = await this.buildFinalAssessmentPayload(dialogHistory, [])
+        const assessmentData = {
+          payload,
+          completedAt: Date.now()
+        }
+        wx.setStorageSync('assessmentData', assessmentData)
+      } catch (e2) {
+        console.error(e2)
+      }
+      wx.redirectTo({ url: '/pages/report/report?timeline=0&fromAssessment=1' })
     } finally {
       this.setData({ generating: false })
     }

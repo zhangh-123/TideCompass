@@ -157,7 +157,14 @@ Page({
       console.error(e)
     }
 
-    if (!stored || !hasValidAssessmentPayload(stored)) {
+    const fromAssessmentGenerate = String(options.fromAssessment || '') === '1'
+    const missingStored = !stored
+    const payloadWeak = !hasValidAssessmentPayload(stored)
+    /** 刚从体检点「生成报告」进来：即使抽取结果全空也要留在报告页，避免误跳回对话 */
+    const forceShowAssessmentReport =
+      fromAssessmentGenerate && stored && stored.payload != null && !missingStored
+
+    if ((missingStored || payloadWeak) && !forceShowAssessmentReport) {
       await this.loadLatestReportMode()
       return
     }
