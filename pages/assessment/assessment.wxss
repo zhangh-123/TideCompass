@@ -399,7 +399,19 @@
   font-size: 30rpx;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 14rpx;
+  margin-bottom: 10rpx;
+}
+
+.review-hint {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.55;
+  color: #64748b;
+  margin-bottom: 16rpx;
+  padding: 14rpx 16rpx;
+  background: #f1f5f9;
+  border-radius: 12rpx;
+  border: 1rpx solid #e2e8f0;
 }
 
 .review-input {
@@ -519,8 +531,15 @@
   }
 
   .review-title,
+  .review-hint,
   .review-input {
     color: #e2e8f0;
+  }
+
+  .review-hint {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
   }
 
   .review-input {

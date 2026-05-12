@@ -10,6 +10,7 @@ const {
   dedupeFinancialRows,
   crossDedupeAssetsLiabilities
 } = require('../../utils/extractHelper.js')
+const { sanitizeOcrReviewText } = require('../../utils/ocrReviewText.js')
 
 const DEFAULT_SYSTEM_PROMPT =
   '你是专业、温和的中文财务体检助手。目标是通过多轮对话收集完整财务画像并识别未来风险。必须覆盖并尽量量化这7类信息：1) 现金与存款（活期/定期/货基）2) 主要资产（房产、车辆、理财、股票基金等）3) 负债（余额、利率、月供/最低还款、到期时间）4) 稳定收入（税后月收入、是否波动）5) 固定支出（家庭刚性开销）6) 保障情况（医保/商保）7) 未来12个月已知事件（大额支出、收入变化、债务到期）。规则：若用户输入不便或信息较多，主动建议其上传银行/支付宝/微信账单或资产截图，并说明“可在输入框旁点击上传按钮进行OCR识别”；若用户提到未来事件但未给时间，必须追问时间；若金额缺失，优先追问金额或区间。只有当以上信息已覆盖，或用户明确表示“暂不清楚/没有更多可补充”时，才结束并在回复末尾明确写出：感谢您的分享，我将为您生成报告。每轮最多问2个关键问题，语气简洁自然，避免一次性长问卷。'
@@ -32,7 +33,7 @@ const FIRST_ASSISTANT_MESSAGE =
   '您好，我是您的财务助手。能否简单说说，最近在财务或工作上最让您感到焦虑的事情是什么？'
 const QUICK_EMOJIS = ['🙂', '😄', '🙏', '💪', '📈', '💰', '🏠', '🚗', '🧾', '✅']
 const IMAGE_EXTRACT_PROMPT =
-  '请识别这张财务截图中的关键信息，并用简洁中文输出可确认文本。优先提取：总资产、各资产项金额、负债项金额、收入/支出相关金额。若看不清请明确写“部分字段不清晰”。不要输出JSON。'
+  '请识别这张财务截图。只输出与「资产、负债、月收入、月支出」直接相关的条目，每行一条，简洁中文；带金额须写单位（元/万等）。不要客套话、不要总结段、不要重复同一句话。若看不清写「部分字段不清晰」。不要输出 JSON。'
 
 Page({
   msgSeq: 0,
@@ -456,7 +457,8 @@ Page({
   },
 
   buildImageConfirmMessage(text) {
-    return `我上传图片后识别并确认的信息如下：\n${String(text || '').trim()}\n请把这些信息纳入体检，并继续补问我还缺少的关键信息。`
+    const body = String(text || '').trim()
+    return `我上传图片后已核对识别内容，确认与资产负债相关的信息如下（已删除无关与重复项）：\n${body}\n请把这些信息纳入体检，并继续补问我还缺少的关键信息。`
   },
 
   async onUploadImageTap() {
@@ -530,7 +532,7 @@ Page({
               imageUrl: tempFileURL,
               userPrompt: IMAGE_EXTRACT_PROMPT,
               systemPrompt:
-                '你是财务截图识别助手。请将截图中的资产、负债、收入、支出关键信息提炼成简洁中文，便于用户确认。'
+                '你是财务截图识别助手。只输出与资产、负债、月收入、月支出相关的短句，每行一条，不要客套与重复，不要长总结。'
             }
           }),
           25000,
@@ -541,13 +543,16 @@ Page({
 
         const extracted = String(body.reply || '').trim()
         if (!extracted) throw new Error('AI未返回可确认内容')
-        ocrParts.push(`【图片 ${i + 1}：${fileName}】\n${extracted}`)
+        const tidied = sanitizeOcrReviewText(extracted) || extracted
+        ocrParts.push(`【图片 ${i + 1}：${fileName}】\n${tidied}`)
       }
 
       wx.hideLoading()
+      const merged = ocrParts.join('\n\n')
+      const reviewBody = sanitizeOcrReviewText(merged) || merged
       this.setData({
         imageReviewVisible: true,
-        imageReviewText: ocrParts.join('\n\n')
+        imageReviewText: reviewBody
       })
       this.scrollToBottom()
     } catch (e) {
@@ -724,9 +729,10 @@ Page({
   },
 
   async onConfirmImageReview() {
-    const text = String(this.data.imageReviewText || '').trim()
+    const raw = String(this.data.imageReviewText || '').trim()
+    const text = sanitizeOcrReviewText(raw) || raw
     if (!text) {
-      wx.showToast({ title: '请先填写识别内容', icon: 'none' })
+      wx.showToast({ title: '请保留与资产/负债相关的条目', icon: 'none' })
       return
     }
     this.setData({

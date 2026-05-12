@@ -7,7 +7,7 @@
 | 模块 | 说明 |
 |------|------|
 | 账号与安全 | 登录、手机号绑定、用户资料 |
-| 财务体检 / 评估 | 引导式评估、`pages/assessment`；支持多图依次 OCR；输入框固定单行高度、对话区自动滚底；调用大模型时会将用户在资料页已填写的画像拼入 system 提示词（`utils/assessmentUserContext.js`）；解析规则见 `utils/extractHelper.js` |
+| 财务体检 / 评估 | 引导式评估、`pages/assessment`；支持多图依次 OCR，识图后弹窗会提示核对并自动清洗无关/重复句（`utils/ocrReviewText.js`）；输入框固定单行高度、对话区自动滚底；用户画像拼入 system 提示词见 `utils/assessmentUserContext.js`；对话解析见 `utils/extractHelper.js` |
 | 报告 | 报告生成流程、双表诊断页 `pages/report`（四维雷达 + 分数说明文案）、详情与图表（含 ECharts） |
 | 首页与导航 | `pages/index`、引导页 `carousel` |
 | 收支 | 手动记账、流水列表、对话式记账（`chat_add`） |
@@ -32,7 +32,7 @@
 ├── app.js / app.json / app.wxss   # 小程序入口与全局配置
 ├── pages/                         # 各业务页面
 ├── components/                    # 公共组件（含 ec-canvas）
-├── utils/                         # 工具与状态机等
+├── utils/                         # 工具与状态机等（含 `ocrReviewText.js` 识图结果清洗）
 ├── cloudfunctions/                # 云函数（每个子目录独立部署）
 ├── ui-prototypes/                 # 原型或静态 HTML 实验页（非小程序运行时）
 ├── project.config.json            # 微信开发者工具工程配置

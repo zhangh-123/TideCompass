@@ -114,7 +114,10 @@
   </view>
   <view wx:if="{{imageReviewVisible}}" class="review-mask">
     <view class="review-modal">
-      <text class="review-title">请确认识别内容（可修改）</text>
+      <text class="review-title">核对识别内容</text>
+      <text class="review-hint">
+        请对照原图确认是否准确。下方已自动去掉明显无关、客套和完全重复的句子；请再手动删掉与资产负债无关或仍重复的内容，保留与资产、负债、收支相关的条目后再点「确认并发送」。
+      </text>
       <textarea
         class="review-input"
         maxlength="3000"
