@@ -773,9 +773,18 @@ Page({
       const timelineEvents = Array.isArray(body.timeline_events) ? body.timeline_events : []
       wx.setStorageSync(this.getTimelineStorageKey(), timelineEvents)
 
+      let serverUserId = ''
+      try {
+        const db = wx.cloud.database()
+        const { data } = await db.collection('users').where({ openId: this.currentOpenId }).limit(1).get()
+        const u = data && data[0]
+        if (u && u._id) serverUserId = String(u._id)
+      } catch (e) {}
+
       const assessmentData = {
         payload: this.inferAssessmentPayload(dialogHistory, timelineEvents),
-        completedAt: Date.now()
+        completedAt: Date.now(),
+        ...(serverUserId ? { serverUserId } : {})
       }
       wx.setStorageSync('assessmentData', assessmentData)
       this.clearDraft()

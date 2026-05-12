@@ -54,7 +54,26 @@ function getHomePath(user) {
   if (!user.isFirstAssessmentDone) {
     try {
       const ad = wx.getStorageSync('assessmentData')
-      if (ad && ad.payload && ad.completedAt) return '/pages/report/report'
+      if (ad && ad.payload && ad.completedAt) {
+        const created = Number(user.createdAt) || 0
+        const doneAt = Number(ad.completedAt) || 0
+        // 账号被删后重建：同一 openId 新文档的 createdAt 晚于旧体检完成时间，本地 assessmentData 为残留，应走体检而非报告
+        if (created && doneAt && doneAt < created) {
+          try {
+            wx.removeStorageSync('assessmentData')
+          } catch (e2) {}
+        } else if (
+          ad.serverUserId &&
+          user._id &&
+          ad.serverUserId !== user._id
+        ) {
+          try {
+            wx.removeStorageSync('assessmentData')
+          } catch (e3) {}
+        } else {
+          return '/pages/report/report'
+        }
+      }
     } catch (e) {}
     return '/pages/assessment/assessment'
   }

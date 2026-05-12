@@ -3,6 +3,7 @@ const { getHomePath } = require('../../utils/route.js')
 function clearAssessmentLocalCache(openId) {
   const oid = String(openId || '').trim()
   const keys = [
+    'assessmentData',
     'assessment_dialog',
     'assessment_dialog_draft',
     'assessment_timeline_events',
