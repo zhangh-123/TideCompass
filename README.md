@@ -7,7 +7,7 @@
 | 模块 | 说明 |
 |------|------|
 | 账号与安全 | 登录、手机号绑定、用户资料 |
-| 财务体检 / 评估 | 引导式评估、`pages/assessment`；调用大模型时会将用户在资料页已填写的画像（出生年、职业、家庭、子女、赡养、地区、学历行业、是否持有房产等）拼入 system 提示词（`utils/assessmentUserContext.js`） |
+| 财务体检 / 评估 | 引导式评估、`pages/assessment`；支持多图依次 OCR；输入框固定单行高度、对话区自动滚底；调用大模型时会将用户在资料页已填写的画像拼入 system 提示词（`utils/assessmentUserContext.js`）；解析规则见 `utils/extractHelper.js` |
 | 报告 | 报告生成流程、双表诊断页 `pages/report`（四维雷达 + 分数说明文案）、详情与图表（含 ECharts） |
 | 首页与导航 | `pages/index`、引导页 `carousel` |
 | 收支 | 手动记账、流水列表、对话式记账（`chat_add`） |

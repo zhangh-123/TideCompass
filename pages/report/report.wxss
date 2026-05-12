@@ -58,12 +58,16 @@
   margin: 0 !important;
   padding: 10rpx 22rpx !important;
   font-size: 26rpx !important;
-  line-height: 1.35 !important;
+  line-height: 1.2 !important;
   border-radius: 16rpx !important;
   background: rgba(30, 58, 138, 0.1) !important;
   color: #1e3a8a !important;
   font-weight: 500 !important;
   border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
 .refresh-soft::after {
@@ -375,13 +379,17 @@
 .share-btn {
   flex: 1;
   height: 92rpx;
-  line-height: 92rpx;
+  line-height: 1.2;
   border-radius: 24rpx !important;
   font-size: 28rpx !important;
   font-weight: 500 !important;
   background: rgba(30, 58, 138, 0.08) !important;
   color: #1e3a8a !important;
   border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
 .share-btn::after {
@@ -391,13 +399,17 @@
 .done-btn {
   flex: 1;
   height: 92rpx;
-  line-height: 92rpx;
+  line-height: 1.2;
   border-radius: 24rpx !important;
   font-size: 32rpx !important;
   font-weight: 500 !important;
   color: #ffffff !important;
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
   border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
 .done-btn::after {

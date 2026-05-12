@@ -79,7 +79,7 @@
         class="composer-input {{composerFocus ? 'is-focus' : ''}}"
         placeholder="请输入回复"
         maxlength="800"
-        auto-height
+        auto-height="{{false}}"
         cursor-spacing="28"
         show-confirm-bar="{{true}}"
         confirm-type="send"

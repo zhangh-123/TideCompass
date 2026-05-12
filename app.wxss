@@ -2,3 +2,12 @@ page {
   background-color: #f5f5f5;
   box-sizing: border-box;
 }
+
+/* 微信 button 默认 line-height 易导致文字视觉偏下，统一用 flex 垂直居中 */
+button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.25 !important;
+  box-sizing: border-box !important;
+}

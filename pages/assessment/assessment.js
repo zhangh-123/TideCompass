@@ -6,7 +6,9 @@ const {
   extractIncome,
   extractExpense,
   extractSkillAndWorry,
-  strip
+  strip,
+  dedupeFinancialRows,
+  crossDedupeAssetsLiabilities
 } = require('../../utils/extractHelper.js')
 
 const DEFAULT_SYSTEM_PROMPT =
@@ -401,8 +403,11 @@ Page({
       }
     })
 
-    payload.assets = Array.from(assetDedupe.values())
-    payload.liabilities = Array.from(liabDedupe.values())
+    payload.assets = dedupeFinancialRows(Array.from(assetDedupe.values()))
+    payload.liabilities = dedupeFinancialRows(Array.from(liabDedupe.values()))
+    const cross = crossDedupeAssetsLiabilities(payload.assets, payload.liabilities)
+    payload.assets = cross.assets
+    payload.liabilities = cross.liabilities
 
     return payload
   },
@@ -461,75 +466,90 @@ Page({
     try {
       const chooseRes = await new Promise((resolve, reject) => {
         wx.chooseImage({
-          count: 1,
+          count: 9,
           sizeType: ['compressed'],
           sourceType: ['album', 'camera'],
           success: resolve,
           fail: reject
         })
       })
-      failStage = '读取图片'
-      const tempFile = (chooseRes.tempFiles && chooseRes.tempFiles[0]) || null
-      if (!tempFile || !tempFile.path) throw new Error('未选择图片')
-      const fileName = tempFile.name || `assessment_${Date.now()}.jpg`
-      const fileSizeKb = Math.max(1, Math.round((tempFile.size || 0) / 1024))
-      this.pushMessage('user', '', {
-        messageType: 'file',
-        fileName,
-        fileSizeKb,
-        localPath: tempFile.path || '',
-        cloudFileId: ''
-      })
+      const tempFiles = chooseRes.tempFiles || []
+      const paths =
+        (chooseRes.tempFilePaths && chooseRes.tempFilePaths.length
+          ? chooseRes.tempFilePaths
+          : tempFiles.map((f) => f.path).filter(Boolean)) || []
+      if (!paths.length) throw new Error('未选择图片')
 
-      failStage = '上传云存储'
-      wx.showLoading({ title: '上传并识别中…', mask: true })
-      const ext = (tempFile.path.split('.').pop() || 'jpg').toLowerCase()
-      const cloudPath = `assessment/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-      const up = await wx.cloud.uploadFile({ cloudPath, filePath: tempFile.path })
-      const list = this.data.messages.slice()
-      if (list.length > 0) {
+      const ocrParts = []
+      const total = paths.length
+      for (let i = 0; i < total; i += 1) {
+        const path = paths[i]
+        const tempFile = tempFiles[i] || { path, size: 0 }
+        failStage = `读取图片 (${i + 1}/${total})`
+        if (!path) continue
+
+        const fileName = tempFile.name || `assessment_${Date.now()}_${i + 1}.jpg`
+        const fileSizeKb = Math.max(1, Math.round((tempFile.size || 0) / 1024))
+        this.pushMessage('user', '', {
+          messageType: 'file',
+          fileName,
+          fileSizeKb,
+          localPath: path,
+          cloudFileId: ''
+        })
+
+        failStage = `上传云存储 (${i + 1}/${total})`
+        wx.showLoading({ title: `上传并识别 ${i + 1}/${total}…`, mask: true })
+        const ext = (path.split('.').pop() || 'jpg').toLowerCase()
+        const cloudPath = `assessment/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${i}.${ext}`
+        const up = await wx.cloud.uploadFile({ cloudPath, filePath: path })
+
+        const list = this.data.messages.slice()
         const last = list[list.length - 1]
-        if (last && last.messageType === 'file' && !last.cloudFileId) {
+        if (last && last.messageType === 'file' && !last.cloudFileId && last.localPath === path) {
           last.cloudFileId = up.fileID
-          this.setData({ messages: list })
+          this.setData({ messages: list }, () => this.scrollToBottom())
         }
+
+        failStage = `获取图片链接 (${i + 1}/${total})`
+        const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [up.fileID] })
+        const tempFileURL =
+          tempUrlRes &&
+          tempUrlRes.fileList &&
+          tempUrlRes.fileList[0] &&
+          tempUrlRes.fileList[0].tempFileURL
+        if (!tempFileURL) {
+          throw new Error('未获取到图片访问链接')
+        }
+
+        failStage = `调用AI识图 (${i + 1}/${total})`
+        const parseRes = await this.withTimeout(
+          wx.cloud.callFunction({
+            name: 'chatCompletion',
+            data: {
+              imageUrl: tempFileURL,
+              userPrompt: IMAGE_EXTRACT_PROMPT,
+              systemPrompt:
+                '你是财务截图识别助手。请将截图中的资产、负债、收入、支出关键信息提炼成简洁中文，便于用户确认。'
+            }
+          }),
+          25000,
+          'AI识图超时，请稍后重试'
+        )
+        const body = parseRes.result || {}
+        if (!body.success) throw new Error(body.message || '图片识别失败')
+
+        const extracted = String(body.reply || '').trim()
+        if (!extracted) throw new Error('AI未返回可确认内容')
+        ocrParts.push(`【图片 ${i + 1}：${fileName}】\n${extracted}`)
       }
 
-      failStage = '获取图片临时链接'
-      const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [up.fileID] })
-      const tempFileURL =
-        tempUrlRes &&
-        tempUrlRes.fileList &&
-        tempUrlRes.fileList[0] &&
-        tempUrlRes.fileList[0].tempFileURL
-      if (!tempFileURL) {
-        throw new Error('未获取到图片访问链接')
-      }
-
-      failStage = '调用AI识图'
-      const parseRes = await this.withTimeout(
-        wx.cloud.callFunction({
-          name: 'chatCompletion',
-          data: {
-            imageUrl: tempFileURL,
-            userPrompt: IMAGE_EXTRACT_PROMPT,
-            systemPrompt:
-              '你是财务截图识别助手。请将截图中的资产、负债、收入、支出关键信息提炼成简洁中文，便于用户确认。'
-          }
-        }),
-        20000,
-        'AI识图超时，请稍后重试'
-      )
       wx.hideLoading()
-      const body = parseRes.result || {}
-      if (!body.success) throw new Error(body.message || '图片识别失败')
-
-      const extracted = String(body.reply || '').trim()
-      if (!extracted) throw new Error('AI未返回可确认内容')
       this.setData({
         imageReviewVisible: true,
-        imageReviewText: extracted
+        imageReviewText: ocrParts.join('\n\n')
       })
+      this.scrollToBottom()
     } catch (e) {
       wx.hideLoading()
       console.error(e)
@@ -578,10 +598,15 @@ Page({
     ])
   },
 
+  scrollToBottom() {
+    this.setData({ scrollIntoView: '' })
+    wx.nextTick(() => {
+      this.setData({ scrollIntoView: 'chat-end' })
+    })
+  },
+
   scrollToLast() {
-    const last = this.data.messages[this.data.messages.length - 1]
-    if (!last) return
-    this.setData({ scrollIntoView: `msg-${last.id}` })
+    this.scrollToBottom()
   },
 
   pushMessage(role, content, extra = {}) {
@@ -593,9 +618,8 @@ Page({
       messageType: 'text',
       ...extra
     })
-    this.setData({
-      messages,
-      scrollIntoView: `msg-${id}`
+    this.setData({ messages }, () => {
+      this.scrollToBottom()
     })
   },
 
@@ -608,7 +632,9 @@ Page({
   },
 
   async requestAssistantReply() {
-    this.setData({ aiTyping: true })
+    this.setData({ aiTyping: true }, () => {
+      this.scrollToBottom()
+    })
     try {
       const res = await this.withTimeout(
         wx.cloud.callFunction({
@@ -627,7 +653,7 @@ Page({
       }
       this.pushAssistant(String(body.reply))
       if (this.shouldShowGenerateButtonByReply(body.reply)) {
-        this.setData({ showGenerateButton: true })
+        this.setData({ showGenerateButton: true }, () => this.scrollToBottom())
       }
     } catch (e) {
       console.error(e)
@@ -636,6 +662,7 @@ Page({
     } finally {
       this.setData({ aiTyping: false, sending: false })
       this.persistDraft()
+      this.scrollToBottom()
     }
   },
 

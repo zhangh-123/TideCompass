@@ -34,9 +34,22 @@ function liabilityAmountIsMonthlyPayment(raw, matchIndex) {
   const lo = Math.max(0, matchIndex - 40)
   const hi = Math.min(raw.length, matchIndex + 18)
   const ctx = raw.slice(lo, hi)
-  return /月供|月供款|每月(?:需)?还|月还款|按揭月还|每期还|元\s*[\/／]\s*月|\/月|块钱\s*一\s*个月|最低还款|每期应还/.test(
+  return /月供|月供款|每月(?:需)?还|月还款|按揭月还|每期还|元\s*[\/／]\s*月|\/月|块钱\s*一\s*个月|最低还款|每期应还|按揭.*月/.test(
     ctx
   )
+}
+
+/** 避免把月供、月还款误记为房产/存款等资产 */
+function assetAmountIsMonthlyPayment(raw, matchIndex) {
+  const lo = Math.max(0, matchIndex - 40)
+  const hi = Math.min(raw.length, matchIndex + 18)
+  return /月供|月还|每月(?:需)?还|月还款|每期还|元\s*[\/／]\s*月|\/月|应还(?:款)?/.test(raw.slice(lo, hi))
+}
+
+function contextWindow(raw, matchIndex, beforeLen, afterLen) {
+  const lo = Math.max(0, matchIndex - beforeLen)
+  const hi = Math.min(raw.length, matchIndex + afterLen)
+  return raw.slice(lo, hi)
 }
 
 /**
@@ -50,10 +63,16 @@ function extractAssets(text) {
   const re = /([\d,]+(?:\.[\d,]+)?)\s*(亿|百万|万|千|元)?/g
   let m
   while ((m = re.exec(raw)) !== null) {
+    if (assetAmountIsMonthlyPayment(raw, m.index)) continue
     const val = parseMoneyToYuan(m[1], m[2])
     if (!val) continue
+    const endOfMatch = m.index + (m[0] || '').length
+    if (val >= 1940 && val <= 2030 && /年/.test(raw.slice(endOfMatch, endOfMatch + 3))) continue
+    const win = contextWindow(raw, m.index, 48, 16)
+    if (/总负债|负债合计|负债总额|欠款合计/.test(win) && !/资产|存款|余额|理财/.test(win)) continue
     const before = raw.slice(Math.max(0, m.index - 24), m.index)
     const type = detectAssetType(before)
+    if ((type === '房产' || type === '车辆') && val < 10000) continue
     let count = 1
     const countMatch = before.match(/(\d+)\s*套/)
     if (countMatch) count = Math.max(1, parseInt(countMatch[1], 10) || 1)
@@ -88,12 +107,21 @@ function extractLiabilities(text) {
     if (liabilityAmountIsMonthlyPayment(raw, m.index)) continue
     const val = parseMoneyToYuan(m[1], m[2])
     if (!val) continue
+    const win = contextWindow(raw, m.index, 52, 16)
+    if (
+      /总资产|资产总额|资产合计|基金资产|证券资产|可用余额|存款余额|理财本金|持仓市值|份额净值/.test(win) &&
+      !/负债|贷款|欠款|按揭|车贷|房贷|信用卡|借呗|花呗/.test(win)
+    ) {
+      continue
+    }
     const before = raw.slice(Math.max(0, m.index - 24), m.index)
     let type = '负债'
     if (/房贷|按揭|房贷余额/.test(before)) type = '房贷'
     else if (/车贷/.test(before)) type = '车贷'
     else if (/信用卡/.test(before)) type = '信用卡'
     else if (/借款|欠款|贷款/.test(before)) type = '借款'
+    const debtCue = /债|贷款|欠款|按揭|车贷|房贷|信用卡|借呗|花呗|白条|分期|抵押|本金|应还|应付|借款/.test(win)
+    if (type === '负债' && !debtCue) continue
     items.push({ type, value: val, count: 1 })
   }
   return items
@@ -236,6 +264,47 @@ function extractSkillAndWorry(text) {
   return { skill, worry }
 }
 
+/**
+ * 同侧多条里相同金额合并为一条，优先保留语义更具体的名称。
+ */
+function dedupeFinancialRows(rows) {
+  const list = (rows || []).filter((r) => r && Number(r.value) > 0)
+  const rank = (name) => {
+    const n = String(name || '')
+    if (/房贷|车贷|信用卡|借款/.test(n)) return 4
+    if (/房产|车辆|存款/.test(n)) return 3
+    if (/金融资产|理财|股票|基金/.test(n)) return 3
+    if (n === '资产' || n === '负债') return 1
+    return 2
+  }
+  const byVal = new Map()
+  for (const row of list) {
+    const v = Math.round(Number(row.value))
+    const prev = byVal.get(v)
+    if (!prev || rank(row.name) > rank(prev.name)) {
+      byVal.set(v, { name: row.name, value: v })
+    }
+  }
+  return Array.from(byVal.values())
+}
+
+/**
+ * 同一金额既被标成资产又被标成「负债」时，去掉误抓的负债（常见于账单里「总资产」与「负债」同屏 OCR）。
+ */
+function crossDedupeAssetsLiabilities(assets, liabilities) {
+  const assetVals = new Set((assets || []).map((a) => Math.round(Number(a.value) || 0)))
+  const liab = (liabilities || []).filter((l) => {
+    const v = Math.round(Number(l.value) || 0)
+    if (!v) return false
+    if (!assetVals.has(v)) return true
+    const nm = String(l.name || '')
+    if (nm === '负债') return false
+    if (/房贷|车贷|信用卡|借款/.test(nm)) return true
+    return false
+  })
+  return { assets: assets || [], liabilities: liab }
+}
+
 module.exports = {
   extractAssets,
   extractLiabilities,
@@ -246,5 +315,7 @@ module.exports = {
   sumLiabilityValue,
   isNoLiabilityText,
   strip,
-  liabilityAmountIsMonthlyPayment
+  liabilityAmountIsMonthlyPayment,
+  dedupeFinancialRows,
+  crossDedupeAssetsLiabilities
 }
