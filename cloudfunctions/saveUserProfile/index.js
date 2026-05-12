@@ -20,11 +20,14 @@ exports.main = async (event) => {
     return { success: false, message: '用户不存在' }
   }
 
+  const preserveAssessment = event.preserveAssessment === true
+  const patch = { profile }
+  if (!preserveAssessment) {
+    patch.isFirstAssessmentDone = false
+  }
+
   await db.collection('users').where({ openId }).update({
-    data: {
-      profile,
-      isFirstAssessmentDone: false
-    }
+    data: patch
   })
 
   return { success: true }

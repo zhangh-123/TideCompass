@@ -1,22 +1,5 @@
 const { getHomePath } = require('../../utils/route.js')
-
-function clearAssessmentLocalCache(openId) {
-  const oid = String(openId || '').trim()
-  const keys = [
-    'assessmentData',
-    'assessment_dialog',
-    'assessment_dialog_draft',
-    'assessment_timeline_events',
-    `assessment_dialog:${oid}`,
-    `assessment_dialog_draft:${oid}`,
-    `assessment_timeline_events:${oid}`
-  ]
-  keys.forEach((k) => {
-    try {
-      wx.removeStorageSync(k)
-    } catch (e) {}
-  })
-}
+const { clearAssessmentCaches } = require('../../utils/session.js')
 
 Page({
   data: {
@@ -59,11 +42,11 @@ Page({
           }
         })
         // 账号被管理员删除后重建时，清理本地旧体检缓存，避免旧对话“穿越”回来。
-        clearAssessmentLocalCache(openId)
+        clearAssessmentCaches(openId)
       }
 
       if (previousOpenId && previousOpenId !== openId) {
-        clearAssessmentLocalCache(previousOpenId)
+        clearAssessmentCaches(previousOpenId)
       }
 
       wx.setStorageSync('openId', openId)

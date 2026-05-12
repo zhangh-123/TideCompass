@@ -6,7 +6,7 @@
 
 | 模块 | 说明 |
 |------|------|
-| 账号与安全 | 登录、手机号绑定、用户资料 |
+| 账号与安全 | 登录、手机号绑定；资料填写页 `profile`；「我的」中修改个人信息、退出登录（`utils/session.js`） |
 | 财务体检 / 评估 | 引导式评估、`pages/assessment`；支持多图依次 OCR，识图后弹窗会提示核对并自动清洗无关/重复句（`utils/ocrReviewText.js`）；输入框固定单行高度、对话区自动滚底；用户画像拼入 system 提示词见 `utils/assessmentUserContext.js`；对话解析见 `utils/extractHelper.js` |
 | 报告 | 报告生成流程、双表诊断页 `pages/report`（四维雷达 + 分数说明文案）、详情与图表（含 ECharts） |
 | 首页与导航 | `pages/index`、引导页 `carousel` |
