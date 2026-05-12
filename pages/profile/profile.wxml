@@ -1,4 +1,10 @@
-<scroll-view class="prof-root" scroll-y enhanced show-scrollbar="{{false}}">
+<scroll-view
+  wx:if="{{!profileComplete}}"
+  class="prof-root"
+  scroll-y
+  enhanced
+  show-scrollbar="{{false}}"
+>
   <text class="page-guide">补充基础信息，我们才能为你生成更贴合的财务分析</text>
 
   <!-- 必填卡片 -->
@@ -122,6 +128,25 @@
   >
     下一步
   </button>
+
+  <view class="bottom-safe"></view>
+</scroll-view>
+
+<scroll-view wx:else class="prof-root mine-root" scroll-y enhanced show-scrollbar="{{false}}">
+  <text class="mine-guide">账号与设置</text>
+
+  <view class="card-block mine-card-block">
+    <view class="mine-row">
+      <text class="mine-label">手机号</text>
+      <text class="mine-value">{{minePhoneMasked}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showAdminEntry}}" class="mine-admin-section">
+    <text class="mine-section-title">运营管理</text>
+    <button class="mine-admin-btn tap-active" hover-class="none" bindtap="goAdmin">后台 · 用户管理</button>
+    <text class="mine-admin-hint">仅管理员账号可见此入口</text>
+  </view>
 
   <view class="bottom-safe"></view>
 </scroll-view>

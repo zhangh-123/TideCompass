@@ -1,4 +1,12 @@
 const { hasCompleteProfile, getHomePath } = require('../../utils/route.js')
+const { isAdminPhone } = require('../../utils/admin.js')
+
+function maskPhone(phone) {
+  const s = String(phone || '').replace(/\s/g, '')
+  if (s.length >= 11) return `${s.slice(0, 3)}****${s.slice(-4)}`
+  if (s.length >= 7) return `${s.slice(0, 2)}****${s.slice(-2)}`
+  return s ? '已绑定' : ''
+}
 
 function buildYearLabels() {
   const ys = []
@@ -46,7 +54,11 @@ Page({
     propertySpecified: false,
     canSubmit: false,
     submitting: false,
-    optionalExpanded: false
+    optionalExpanded: false,
+
+    profileComplete: false,
+    showAdminEntry: false,
+    minePhoneMasked: ''
   },
 
   toggleOptional() {
@@ -95,8 +107,20 @@ Page({
         return
       }
       if (hasCompleteProfile(row.profile)) {
-        wx.reLaunch({ url: getHomePath(row) })
+        wx.setNavigationBarTitle({ title: '我的' })
+        this.setData({
+          profileComplete: true,
+          showAdminEntry: isAdminPhone(row.phone),
+          minePhoneMasked: maskPhone(row.phone)
+        })
+        return
       }
+      wx.setNavigationBarTitle({ title: '个人信息' })
+      this.setData({
+        profileComplete: false,
+        showAdminEntry: false,
+        minePhoneMasked: ''
+      })
     } catch (e) {
       console.error(e)
       wx.reLaunch({ url: '/pages/bind_phone/bind_phone' })
@@ -227,6 +251,29 @@ Page({
       })
     } finally {
       this.setData({ submitting: false })
+    }
+  },
+
+  async goAdmin() {
+    if (!this.data.showAdminEntry) return
+    const openId = wx.getStorageSync('openId')
+    if (!openId) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
+    try {
+      const db = wx.cloud.database()
+      const { data } = await db.collection('users').where({ openId }).limit(1).get()
+      const user = data && data[0]
+      if (!user || !isAdminPhone(user.phone)) {
+        this.setData({ showAdminEntry: false })
+        wx.showToast({ title: '无管理员权限', icon: 'none' })
+        return
+      }
+      wx.navigateTo({ url: '/pages/admin/admin' })
+    } catch (e) {
+      console.error(e)
+      wx.showToast({ title: '校验失败', icon: 'none' })
     }
   }
 })

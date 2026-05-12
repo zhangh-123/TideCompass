@@ -1,5 +1,4 @@
 const { getHomePath } = require('../../utils/route.js')
-const { isAdminPhone } = require('../../utils/admin.js')
 
 function fmtMoney(n) {
   const v = Math.round(Number(n) || 0)
@@ -130,7 +129,6 @@ Page({
 
     debtCompassSubtitle: '暂无红色债务',
     stressVipOnly: true,
-    showAdminEntry: false,
     warnings: [],
     hasWarning: false,
 
@@ -242,8 +240,7 @@ Page({
         debtCompassSubtitle: debtHealth.subtitle,
         stressVipOnly: !(
           user && user.isVip && Number(user.vipExpireAt) > Date.now()
-        ),
-        showAdminEntry: !!(user && isAdminPhone(user.phone))
+        )
       })
 
       await this.loadWarnings()
@@ -254,7 +251,6 @@ Page({
         monthCashflowText: '暂无',
         debtHealthScoreText: '暂无',
         debtCompassSubtitle: '暂无红色债务',
-        showAdminEntry: false,
         warnings: [],
         hasWarning: false
       })
@@ -331,28 +327,5 @@ Page({
 
   goProfile() {
     wx.navigateTo({ url: '/pages/profile/profile' })
-  },
-
-  async goAdmin() {
-    if (!this.data.showAdminEntry) return
-    const openId = wx.getStorageSync('openId')
-    if (!openId) {
-      wx.reLaunch({ url: '/pages/login/login' })
-      return
-    }
-    try {
-      const db = wx.cloud.database()
-      const { data } = await db.collection('users').where({ openId }).limit(1).get()
-      const user = data && data[0]
-      if (!user || !isAdminPhone(user.phone)) {
-        this.setData({ showAdminEntry: false })
-        wx.showToast({ title: '无管理员权限', icon: 'none' })
-        return
-      }
-      wx.navigateTo({ url: '/pages/admin/admin' })
-    } catch (e) {
-      console.error(e)
-      wx.showToast({ title: '校验失败', icon: 'none' })
-    }
   }
 })

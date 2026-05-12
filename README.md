@@ -15,7 +15,7 @@
 | 负债 | 负债罗盘 `debt_compass` |
 | 分析与仿真 | 压力测试、现金流仿真、AI 报告页 |
 | 年费 / 会员 | VIP 与订单相关页面及云函数回调 |
-| 运营 | 管理后台入口 `admin` |
+| 运营 | 管理员在用户路径「我的」页进入管理后台 `pages/admin/admin`（`pages/profile/profile`，管理员手机号见 `utils/admin.js`） |
 | 其他 | 年度账单、文件上传与解析等 |
 
 详细页面路由见根目录 `app.json` 的 `pages` 列表。
