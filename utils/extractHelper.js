@@ -7,13 +7,14 @@ function strip(s) {
 }
 
 function parseMoneyToYuan(numStr, unitRaw) {
-  const n = parseFloat(numStr)
+  const n = parseFloat(String(numStr || '').replace(/,/g, ''))
   if (Number.isNaN(n) || n <= 0) return null
   const u = (unitRaw || '元').replace(/\s/g, '')
   if (u === '元' || u === '') return Math.round(n)
   if (u === '千') return Math.round(n * 1000)
   if (u === '万') return Math.round(n * 10000)
   if (u === '百万') return Math.round(n * 1000000)
+  if (u === '亿') return Math.round(n * 100000000)
   return Math.round(n)
 }
 
@@ -21,9 +22,21 @@ function detectAssetType(beforeSlice) {
   const b = beforeSlice || ''
   if (/房|不动产|房产/.test(b)) return '房产'
   if (/车|辆/.test(b)) return '车辆'
-  if (/存款|现金|活期|定期/.test(b)) return '存款'
-  if (/股票|基金|理财|债券/.test(b)) return '金融资产'
+  if (/存款|现金|活期|定期|存单/.test(b)) return '存款'
+  if (/股票|基金|理财|债券|贵金属|保单|股权|余额宝|持仓|市值/.test(b)) return '金融资产'
   return '资产'
+}
+
+/**
+ * 判断该数字是否处于「月供 / 每月还款」语境，避免把月还款额误记为本金负债。
+ */
+function liabilityAmountIsMonthlyPayment(raw, matchIndex) {
+  const lo = Math.max(0, matchIndex - 40)
+  const hi = Math.min(raw.length, matchIndex + 18)
+  const ctx = raw.slice(lo, hi)
+  return /月供|月供款|每月(?:需)?还|月还款|按揭月还|每期还|元\s*[\/／]\s*月|\/月|块钱\s*一\s*个月|最低还款|每期应还/.test(
+    ctx
+  )
 }
 
 /**
@@ -34,12 +47,12 @@ function extractAssets(text) {
   if (!raw) return []
 
   const items = []
-  const re = /([\d.]+)\s*(百万|万|千|元)?/g
+  const re = /([\d,]+(?:\.[\d,]+)?)\s*(亿|百万|万|千|元)?/g
   let m
   while ((m = re.exec(raw)) !== null) {
     const val = parseMoneyToYuan(m[1], m[2])
     if (!val) continue
-    const before = raw.slice(Math.max(0, m.index - 12), m.index)
+    const before = raw.slice(Math.max(0, m.index - 24), m.index)
     const type = detectAssetType(before)
     let count = 1
     const countMatch = before.match(/(\d+)\s*套/)
@@ -69,12 +82,13 @@ function extractLiabilities(text) {
   if (isNoLiabilityText(raw)) return []
 
   const items = []
-  const re = /([\d.]+)\s*(百万|万|千|元)?/g
+  const re = /([\d,]+(?:\.[\d,]+)?)\s*(亿|百万|万|千|元)?/g
   let m
   while ((m = re.exec(raw)) !== null) {
+    if (liabilityAmountIsMonthlyPayment(raw, m.index)) continue
     const val = parseMoneyToYuan(m[1], m[2])
     if (!val) continue
-    const before = raw.slice(Math.max(0, m.index - 12), m.index)
+    const before = raw.slice(Math.max(0, m.index - 24), m.index)
     let type = '负债'
     if (/房贷|按揭|房贷余额/.test(before)) type = '房贷'
     else if (/车贷/.test(before)) type = '车贷'
@@ -231,5 +245,6 @@ module.exports = {
   sumAssetValue,
   sumLiabilityValue,
   isNoLiabilityText,
-  strip
+  strip,
+  liabilityAmountIsMonthlyPayment
 }

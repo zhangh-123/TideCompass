@@ -60,6 +60,13 @@
           <text class="score-num tone-{{scoreTone.cashflowSafety}}">{{radarScores.cashflowSafety}}</text>
         </view>
       </view>
+
+      <view wx:if="{{scoreNarrativeLines.length}}" class="score-narrative">
+        <text class="score-narrative-title">分数怎么来的</text>
+        <view wx:for="{{scoreNarrativeLines}}" wx:key="index" class="score-narrative-block">
+          <text class="score-narrative-body">{{item}}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 资产负债表 -->

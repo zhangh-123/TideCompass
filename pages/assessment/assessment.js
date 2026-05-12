@@ -1,5 +1,13 @@
 const { hasCompleteProfile, getHomePath } = require('../../utils/route.js')
 const { mergeProfileIntoAssessmentSystemPrompt } = require('../../utils/assessmentUserContext.js')
+const {
+  extractAssets,
+  extractLiabilities,
+  extractIncome,
+  extractExpense,
+  extractSkillAndWorry,
+  strip
+} = require('../../utils/extractHelper.js')
 
 const DEFAULT_SYSTEM_PROMPT =
   '你是专业、温和的中文财务体检助手。目标是通过多轮对话收集完整财务画像并识别未来风险。必须覆盖并尽量量化这7类信息：1) 现金与存款（活期/定期/货基）2) 主要资产（房产、车辆、理财、股票基金等）3) 负债（余额、利率、月供/最低还款、到期时间）4) 稳定收入（税后月收入、是否波动）5) 固定支出（家庭刚性开销）6) 保障情况（医保/商保）7) 未来12个月已知事件（大额支出、收入变化、债务到期）。规则：若用户输入不便或信息较多，主动建议其上传银行/支付宝/微信账单或资产截图，并说明“可在输入框旁点击上传按钮进行OCR识别”；若用户提到未来事件但未给时间，必须追问时间；若金额缺失，优先追问金额或区间。只有当以上信息已覆盖，或用户明确表示“暂不清楚/没有更多可补充”时，才结束并在回复末尾明确写出：感谢您的分享，我将为您生成报告。每轮最多问2个关键问题，语气简洁自然，避免一次性长问卷。'
@@ -319,38 +327,82 @@ Page({
       payload.coreSkill = skillMatched ? skillMatched[1] : ''
     }
 
+    const sw = extractSkillAndWorry(allUserText)
+    if (sw.skill) payload.coreSkill = sw.skill
+    if (sw.worry) payload.maxWorry = sw.worry.slice(0, 120)
+
+    const assetDedupe = new Map()
+    const pushAsset = (name, value) => {
+      const v = Math.round(Number(value) || 0)
+      if (!Number.isFinite(v) || v <= 0) return
+      const label = String(name || '资产').trim() || '资产'
+      const key = `${label}|${v}`
+      if (assetDedupe.has(key)) return
+      assetDedupe.set(key, { name: label, value: v })
+    }
+
     userTexts.forEach((txt) => {
-      const assetVal = this.pickNearestAmountByKeyword(txt, /存款|余额|资产|现金|理财|总资产/)
-      const debtVal = this.pickNearestAmountByKeyword(txt, /月供|房贷|车贷|信用卡|借呗|负债|贷款/)
-      const incomeVal = this.pickNearestAmountByKeyword(txt, /月收入|工资|收入/)
-      const expenseVal = this.pickNearestAmountByKeyword(txt, /支出|花费|开销|学费|医疗|房租|生活费/)
-      const fallbackVal = this.parseMoneyFromText(txt) || this.parseChineseMoneyFromText(txt)
+      const raw = strip(txt)
+      if (!raw) return
+      const segments = raw
+        .split(/\n+|；|;/)
+        .map((s) => strip(s))
+        .filter(Boolean)
+      const chunks = segments.length ? segments : [raw]
+      chunks.forEach((chunk) => {
+        extractAssets(chunk).forEach((it) => {
+          const subtotal = Math.round(it.value * (it.count || 1))
+          pushAsset(it.type, subtotal)
+        })
+      })
+    })
 
-      if (assetVal) payload.assets.push({ name: '资产（对话识别）', value: assetVal })
-      if (debtVal) payload.liabilities.push({ name: '负债（对话识别）', value: debtVal })
-      if (incomeVal) payload.monthlyIncome = Math.max(payload.monthlyIncome, incomeVal)
-      if (expenseVal) payload.monthlyExpense = Math.max(payload.monthlyExpense, expenseVal)
+    const liabDedupe = new Map()
+    const pushLiability = (name, value) => {
+      const v = Math.round(Number(value) || 0)
+      if (!Number.isFinite(v) || v <= 0) return
+      const label = String(name || '负债').trim() || '负债'
+      const key = `${label}|${v}`
+      if (liabDedupe.has(key)) return
+      liabDedupe.set(key, { name: label, value: v })
+    }
 
-      if (!assetVal && !debtVal && !incomeVal && !expenseVal && fallbackVal) {
-        if (/存款|余额|资产|现金|理财/.test(txt)) {
-          payload.assets.push({ name: '资产（对话识别）', value: fallbackVal })
-        } else if (/负债|贷款|月供/.test(txt)) {
-          payload.liabilities.push({ name: '负债（对话识别）', value: fallbackVal })
-        }
-      }
+    userTexts.forEach((txt) => {
+      const raw = strip(txt)
+      if (!raw) return
+      const segments = raw
+        .split(/\n+|；|;/)
+        .map((s) => strip(s))
+        .filter(Boolean)
+      const chunks = segments.length ? segments : [raw]
+      chunks.forEach((chunk) => {
+        extractLiabilities(chunk).forEach((it) => {
+          pushLiability(it.type, it.value)
+        })
+      })
+    })
+
+    userTexts.forEach((txt) => {
+      const inc = extractIncome(txt)
+      if (inc) payload.monthlyIncome = Math.max(payload.monthlyIncome, inc)
+      const exp = extractExpense(txt)
+      if (exp) payload.monthlyExpense = Math.max(payload.monthlyExpense, exp)
     })
 
     ;(Array.isArray(timelineEvents) ? timelineEvents : []).forEach((ev) => {
       const amount = Number(ev && ev.amount)
       if (!Number.isFinite(amount) || amount <= 0) return
       if (ev.type === 'debt_maturity') {
-        payload.liabilities.push({ name: ev.description || '债务到期', value: amount })
+        pushLiability(ev.description || '债务到期', amount)
       } else if (ev.type === 'lump_sum_expense') {
         payload.monthlyExpense = Math.max(payload.monthlyExpense, amount)
       } else if (ev.type === 'asset_locked') {
-        payload.assets.push({ name: ev.description || '资产', value: amount })
+        pushAsset(ev.description || '资产', amount)
       }
     })
+
+    payload.assets = Array.from(assetDedupe.values())
+    payload.liabilities = Array.from(liabDedupe.values())
 
     return payload
   },

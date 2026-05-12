@@ -1,4 +1,4 @@
-const { generateReport } = require('../../utils/reportGenerator.js')
+const { generateReport, buildScoreNarrative } = require('../../utils/reportGenerator.js')
 const { drawReportCard } = require('../../utils/shareImage.js')
 
 /** 首次渲染就要拿到实例，否则 ec-canvas 在 ready 里发现 echarts 为空会直接 return */
@@ -117,6 +117,8 @@ Page({
     emotionLine: '',
     trendHint: '',
     netWorthTone: 'pos',
+    scoreNarrative: '',
+    scoreNarrativeLines: [],
     scoreTone: {
       financialHealth: 'neutral',
       skillRetention: 'neutral',
@@ -178,7 +180,12 @@ Page({
       riskCard: report.riskCard,
       dynamicHint: merged.hint,
       radarReady: false,
-      ...pres
+      ...pres,
+      scoreNarrative: report.scoreNarrative || '',
+      scoreNarrativeLines: (report.scoreNarrative || '')
+        .split(/\n\n/)
+        .map((s) => s.trim())
+        .filter(Boolean)
     })
     wx.nextTick(() => {
       setTimeout(() => this.initRadar(merged.scores), 80)
@@ -250,6 +257,22 @@ Page({
 
       this._reportMode = 'latest'
       const pres = this.computePresentation(merged.scores, netWorth)
+      const monthlyExpenseGuess = Math.max(
+        1,
+        Number(hr && hr.monthlyExpense) ||
+          Number(snap && snap.monthlyExpense) ||
+          5000
+      )
+      const scoreNarrative = buildScoreNarrative({
+        radarScores: merged.scores,
+        netWorth,
+        totalAssets,
+        totalLiabilities,
+        monthlyIncome: Number(hr && hr.monthlyIncome) || Number(snap && snap.monthlyIncome) || 0,
+        monthlyExpense: monthlyExpenseGuess,
+        coreSkill: (hr && hr.coreSkill) || '',
+        biggestWorry: (hr && hr.biggestWorry) || ''
+      })
       this.setData({
         radarScores: merged.scores,
         totalAssetsFmt: fmtYuan(totalAssets),
@@ -265,7 +288,12 @@ Page({
           '近期记账变化较大，请关注月度结余和预算超支情况。',
         dynamicHint: merged.hint,
         radarReady: false,
-        ...pres
+        ...pres,
+        scoreNarrative,
+        scoreNarrativeLines: (scoreNarrative || '')
+          .split(/\n\n/)
+          .map((s) => s.trim())
+          .filter(Boolean)
       })
       wx.nextTick(() => {
         setTimeout(() => this.initRadar(merged.scores), 80)
@@ -330,7 +358,12 @@ Page({
           radarScores: merged.scores,
           dynamicHint: merged.hint,
           radarReady: false,
-          ...pres
+          ...pres,
+          scoreNarrative: this._report.scoreNarrative || '',
+          scoreNarrativeLines: (this._report.scoreNarrative || '')
+            .split(/\n\n/)
+            .map((s) => s.trim())
+            .filter(Boolean)
         })
         wx.nextTick(() => {
           setTimeout(() => this.initRadar(merged.scores), 60)
@@ -452,22 +485,37 @@ Page({
   },
 
   initRadar(scores) {
-    const comp = this.selectComponent('#report-radar')
-    if (!comp) {
-      if (this._radarInitRetry < 4) {
-        this._radarInitRetry += 1
-        setTimeout(() => this.initRadar(scores), 120)
-        return
-      }
-      this.setData({ radarReady: true })
-      console.warn('ec-canvas not found')
-      return
-    }
-
     const ec = ECHARTS_LIB || this.data.echartsLib
     if (!ec || typeof ec.init !== 'function') {
       this.setData({ radarReady: true })
       console.error('ECharts 未正确加载')
+      return
+    }
+
+    wx.createSelectorQuery()
+      .in(this)
+      .select('.radar-box')
+      .boundingClientRect((rect) => {
+        this._radarBoxRect = rect || null
+        this._initRadarWithBox(scores, ec)
+      })
+      .exec()
+  },
+
+  _initRadarWithBox(scores, ec) {
+    const box = this._radarBoxRect
+    const fallbackW = box && box.width > 20 ? box.width : 300
+    const fallbackH = box && box.height > 20 ? box.height : 300
+
+    const comp = this.selectComponent('#report-radar')
+    if (!comp) {
+      if (this._radarInitRetry < 8) {
+        this._radarInitRetry += 1
+        setTimeout(() => this.initRadar(scores), 150)
+        return
+      }
+      this.setData({ radarReady: true })
+      console.warn('ec-canvas not found')
       return
     }
 
@@ -482,23 +530,25 @@ Page({
 
     const readyGuardTimer = setTimeout(() => {
       if (!this.data.radarReady) this.setData({ radarReady: true })
-    }, 3000)
+    }, 4000)
     try {
       comp.init((canvas, width, height, dpr) => {
-        const w = width || 300
-        const h = height || 300
+        const w = width > 20 && height > 20 ? width : fallbackW
+        const h = width > 20 && height > 20 ? height : fallbackH
         const chart = ec.init(canvas, null, {
           width: w,
           height: h,
           devicePixelRatio: dpr || 1
         })
-        canvas.setChart(chart)
+        if (canvas && typeof canvas.setChart === 'function') {
+          canvas.setChart(chart)
+        }
         chart.setOption(this.buildRadarOption(scores))
         setTimeout(() => {
           try {
             chart.resize()
           } catch (e) {}
-        }, 50)
+        }, 80)
         this._radarChart = chart
         this._radarInitRetry = 0
         clearTimeout(readyGuardTimer)

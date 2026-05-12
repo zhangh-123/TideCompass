@@ -152,6 +152,38 @@
   line-height: 1.2;
 }
 
+.score-narrative {
+  margin-top: 28rpx;
+  padding: 24rpx 22rpx;
+  background: #f8fafc;
+  border-radius: 18rpx;
+  border: 1rpx solid #e2e8f0;
+}
+
+.score-narrative-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16rpx;
+}
+
+.score-narrative-body {
+  display: block;
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.score-narrative-block {
+  margin-bottom: 20rpx;
+}
+
+.score-narrative-block:last-child {
+  margin-bottom: 0;
+}
+
 .tone-mint {
   color: #10b981;
 }
