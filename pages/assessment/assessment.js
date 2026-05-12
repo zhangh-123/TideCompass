@@ -17,6 +17,9 @@ const DEFAULT_SYSTEM_PROMPT =
 
 const FINISH_SIGNAL_KEYWORDS = ['感谢您的分享，我将为您生成报告', '为您生成报告', '信息已经足够']
 const REPORT_GENERATE_TIMEOUT_MS = 20000
+/** 须大于云函数 chatCompletion 内 axios 超时，否则客户端会先断开 */
+const CHAT_COMPLETION_CLIENT_MS = 45000
+const CHAT_VISION_CLIENT_MS = 50000
 const CONTINUE_ASK_PATTERNS = [
   /请问/,
   /还需要了解/,
@@ -535,7 +538,7 @@ Page({
                 '你是财务截图识别助手。只输出与资产、负债、月收入、月支出相关的短句，每行一条，不要客套与重复，不要长总结。'
             }
           }),
-          25000,
+          CHAT_VISION_CLIENT_MS,
           'AI识图超时，请稍后重试'
         )
         const body = parseRes.result || {}
@@ -649,7 +652,7 @@ Page({
             systemPrompt: this.assessmentSystemPrompt || DEFAULT_SYSTEM_PROMPT
           }
         }),
-        15000,
+        CHAT_COMPLETION_CLIENT_MS,
         'AI响应超时，请稍后重试'
       )
       const body = res.result || {}
