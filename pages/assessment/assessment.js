@@ -1,4 +1,5 @@
 const { hasCompleteProfile, getHomePath } = require('../../utils/route.js')
+const { mergeProfileIntoAssessmentSystemPrompt } = require('../../utils/assessmentUserContext.js')
 
 const DEFAULT_SYSTEM_PROMPT =
   '你是专业、温和的中文财务体检助手。目标是通过多轮对话收集完整财务画像并识别未来风险。必须覆盖并尽量量化这7类信息：1) 现金与存款（活期/定期/货基）2) 主要资产（房产、车辆、理财、股票基金等）3) 负债（余额、利率、月供/最低还款、到期时间）4) 稳定收入（税后月收入、是否波动）5) 固定支出（家庭刚性开销）6) 保障情况（医保/商保）7) 未来12个月已知事件（大额支出、收入变化、债务到期）。规则：若用户输入不便或信息较多，主动建议其上传银行/支付宝/微信账单或资产截图，并说明“可在输入框旁点击上传按钮进行OCR识别”；若用户提到未来事件但未给时间，必须追问时间；若金额缺失，优先追问金额或区间。只有当以上信息已覆盖，或用户明确表示“暂不清楚/没有更多可补充”时，才结束并在回复末尾明确写出：感谢您的分享，我将为您生成报告。每轮最多问2个关键问题，语气简洁自然，避免一次性长问卷。'
@@ -50,6 +51,7 @@ Page({
     if (!ok) return
 
     this.currentOpenId = wx.getStorageSync('openId') || ''
+    await this.refreshAssessmentSystemPromptFromDb()
     const cached = this.restoreDraft()
     if (cached && cached.messages && cached.messages.length) {
       const normalized = this.normalizeMessages(cached.messages)
@@ -77,6 +79,26 @@ Page({
 
   onUnload() {
     this.persistDraft()
+  },
+
+  async refreshAssessmentSystemPromptFromDb() {
+    this.assessmentSystemPrompt = DEFAULT_SYSTEM_PROMPT
+    try {
+      const openId = wx.getStorageSync('openId')
+      if (!openId) return
+      const db = wx.cloud.database()
+      const { data } = await db.collection('users').where({ openId }).get()
+      const user = data && data[0]
+      if (user && user.profile) {
+        this.assessmentSystemPrompt = mergeProfileIntoAssessmentSystemPrompt(
+          DEFAULT_SYSTEM_PROMPT,
+          user.profile
+        )
+      }
+    } catch (e) {
+      console.error('refreshAssessmentSystemPromptFromDb', e)
+      this.assessmentSystemPrompt = DEFAULT_SYSTEM_PROMPT
+    }
   },
 
   async runGuard() {
@@ -541,7 +563,7 @@ Page({
           name: 'chatCompletion',
           data: {
             messages: this.toApiMessages(),
-            systemPrompt: DEFAULT_SYSTEM_PROMPT
+            systemPrompt: this.assessmentSystemPrompt || DEFAULT_SYSTEM_PROMPT
           }
         }),
         15000,
