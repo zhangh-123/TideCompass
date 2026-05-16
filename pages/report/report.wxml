@@ -1,157 +1,95 @@
-<view class="report-root">
-  <scroll-view
-    class="main"
-    scroll-y
-    enhanced
-    show-scrollbar="{{false}}"
-    refresher-enabled="{{true}}"
-    refresher-threshold="{{90}}"
-    refresher-triggered="{{refresherLoading}}"
-    bindrefresherrefresh="onScrollRefresh"
-  >
-    <!-- 雷达 -->
-    <view class="card radar-card flow-gap">
-      <view class="radar-head">
-        <text class="card-heading">四维雷达</text>
-        <button
-          class="refresh-soft tap-soft"
-          size="mini"
-          hover-class="none"
-          loading="{{refreshingScore}}"
-          disabled="{{refreshingScore}}"
-          bindtap="onRefreshScore"
-        >
-          刷新评分
-        </button>
-      </view>
-      <text class="radar-intro">完成数据录入后，这里将生成你的财务健康雷达图</text>
-      <text wx:if="{{emotionLine}}" class="emotion-line">{{emotionLine}}</text>
-      <text wx:if="{{dynamicHint}}" class="dynamic-hint">{{dynamicHint}}</text>
-
-      <view class="radar-box">
-        <view wx:if="{{!radarReady}}" class="radar-placeholder">
-          <text class="radar-ph-text">图表加载中…</text>
-        </view>
-        <ec-canvas
-          id="report-radar"
-          class="radar-ec"
-          style="width:100%;height:100%;display:block;"
-          canvas-id="report-radar-canvas"
-          echarts="{{ echartsLib }}"
-          ec="{{ ec }}"
-        />
-      </view>
-
-      <view class="score-grid">
-        <view class="score-cell">
-          <text class="score-cap">财务健康度</text>
-          <text class="score-num tone-{{scoreTone.financialHealth}}">{{radarScores.financialHealth}}</text>
-        </view>
-        <view class="score-cell">
-          <text class="score-cap">技能保值度</text>
-          <text class="score-num tone-{{scoreTone.skillRetention}}">{{radarScores.skillRetention}}</text>
-        </view>
-        <view class="score-cell">
-          <text class="score-cap">转型韧性</text>
-          <text class="score-num tone-{{scoreTone.transformationResilience}}">{{radarScores.transformationResilience}}</text>
-        </view>
-        <view class="score-cell">
-          <text class="score-cap">现金流安全度</text>
-          <text class="score-num tone-{{scoreTone.cashflowSafety}}">{{radarScores.cashflowSafety}}</text>
-        </view>
-      </view>
-
-      <view wx:if="{{scoreNarrativeLines.length}}" class="score-narrative">
-        <text class="score-narrative-title">分数怎么来的</text>
-        <view wx:for="{{scoreNarrativeLines}}" wx:key="index" class="score-narrative-block">
-          <text class="score-narrative-body">{{item}}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 资产负债表 -->
-    <view class="card sheet-card flow-gap">
-      <text class="sheet-module-title">传统资产负债表（估算）</text>
-
-      <view class="sheet-row">
-        <text class="sheet-k">资产总计</text>
-        <text class="sheet-v strong">{{totalAssetsFmt}} 元</text>
-      </view>
-      <view class="sheet-row">
-        <text class="sheet-k">负债总计</text>
-        <text class="sheet-v strong">{{totalLiabilitiesFmt}} 元</text>
-      </view>
-      <view class="sheet-row sheet-highlight">
-        <text class="sheet-k">财务净值</text>
-        <text class="sheet-v xl nw-{{netWorthTone}}">{{netWorthFmt}} 元</text>
-      </view>
-      <view wx:if="{{trendHint}}" class="trend-row">
-        <text class="trend-icon">{{netWorthTone === 'pos' ? '→' : '↑'}}</text>
-        <text class="trend-text">{{trendHint}}</text>
-      </view>
-
-      <view class="sub-head tap-soft" bindtap="toggleAssets">
-        <text class="sub-head-title">资产明细</text>
-        <text class="sub-head-more">{{assetExpanded ? '收起' : '展开'}}</text>
-      </view>
-      <view wx:if="{{assetExpanded}}" class="list-wrap">
-        <block wx:if="{{assetLines.length}}">
-          <text wx:for="{{assetLines}}" wx:key="index" class="list-line">{{item}}</text>
-        </block>
-        <text wx:else class="empty-tip">暂无资产条目</text>
-      </view>
-
-      <view class="sub-head tap-soft" bindtap="toggleLiabilities">
-        <text class="sub-head-title">负债明细</text>
-        <text class="sub-head-more">{{liabilityExpanded ? '收起' : '展开'}}</text>
-      </view>
-      <view wx:if="{{liabilityExpanded}}" class="list-wrap">
-        <block wx:if="{{liabilityLines.length}}">
-          <text wx:for="{{liabilityLines}}" wx:key="index" class="list-line">{{item}}</text>
-        </block>
-        <text wx:else class="empty-tip">暂无负债（或未识别）</text>
-      </view>
-    </view>
-
-    <!-- 洞察 -->
-    <view class="card insight-section flow-gap">
-      <text class="card-heading sm">转型洞察</text>
-      <view class="insight-card soft-blue">
-        <text class="insight-tag">被低估的核心资产</text>
-        <text class="insight-body">{{hiddenAssetCard}}</text>
-      </view>
-      <view class="insight-card soft-coral">
-        <text class="insight-tag tag-coral">看不见的暗礁</text>
-        <text class="insight-body">{{riskCard}}</text>
-      </view>
-    </view>
-
-    <view class="bottom-spacer"></view>
-  </scroll-view>
-
-  <view class="footer safe-bottom">
-    <button
-      class="share-btn tap-soft"
-      hover-class="none"
-      loading="{{sharingImage}}"
-      disabled="{{sharingImage}}"
-      bindtap="onShareReportImage"
-    >
-      分享报告图片
-    </button>
-    <button
-      class="done-btn tap-soft"
-      hover-class="none"
-      loading="{{submitting}}"
-      disabled="{{submitting}}"
-      bindtap="onComplete"
-    >
-      完成体检，进入首页
-    </button>
+<view class="report-page">
+  <view wx:if="{{pageLoading}}" class="page-loading">
+    <text>正在加载报告…</text>
   </view>
 
-  <canvas
-    canvas-id="share-report-canvas"
-    style="width:500px;height:800px;position:fixed;left:-9999px;top:-9999px;"
-  />
+  <view wx:elif="{{loadError}}" class="empty-state">
+    <text class="empty-title">暂时无法展示报告</text>
+    <text class="empty-desc">{{loadError}}</text>
+    <button class="empty-btn tap-soft" hover-class="none" bindtap="onGoAssessment">去财务体检</button>
+  </view>
+
+  <view wx:else class="main-body">
+    <view class="report-header">
+      <text class="report-title">财务健康诊断报告</text>
+      <text class="report-date">{{reportDateText}}</text>
+    </view>
+
+    <view class="section-label">核心指标驾驶舱</view>
+    <view class="kpi-row">
+      <view class="kpi-card tap-card" data-kind="assets" bindtap="onKpiTap">
+        <text class="kpi-icon">📦</text>
+        <text class="kpi-label">总资产</text>
+        <text class="kpi-value">{{totalAssetsFmt}}</text>
+        <text class="kpi-hint">点击查看明细</text>
+      </view>
+      <view class="kpi-card tap-card" data-kind="liabilities" bindtap="onKpiTap">
+        <text class="kpi-icon">⚠️</text>
+        <text class="kpi-label">总负债</text>
+        <text class="kpi-value">{{totalLiabilitiesFmt}}</text>
+        <text class="kpi-hint">点击查看明细</text>
+      </view>
+      <view class="kpi-card kpi-net">
+        <text class="kpi-icon">⚖️</text>
+        <text class="kpi-label">净资产</text>
+        <text class="kpi-value tone-{{netWorthTone}}">{{netWorthFmt}}</text>
+        <text class="kpi-hint">资产 − 负债</text>
+      </view>
+    </view>
+
+    <view class="ai-section">
+      <text class="ai-title">📊 智能财务分析报告</text>
+      <view wx:if="{{aiLoading}}" class="ai-box ai-loading">
+        <text>正在生成个性化分析，请稍候…</text>
+      </view>
+      <view wx:else class="ai-box">
+        <text wx:if="{{aiError}}" class="ai-error">{{aiError}}</text>
+        <text class="ai-body">{{aiAnalysis}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!pageLoading && !loadError}}" class="footer safe-bottom">
+    <view class="footer-actions">
+      <button class="footer-btn secondary tap-soft" hover-class="none" bindtap="onReenterAssessment">
+        重新录入
+      </button>
+      <button
+        wx:if="{{showCompleteBtn}}"
+        class="footer-btn primary tap-soft"
+        hover-class="none"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bindtap="onComplete"
+      >
+        完成体检，进入首页
+      </button>
+      <button wx:else class="footer-btn primary tap-soft" hover-class="none" bindtap="onGoHome">
+        返回首页
+      </button>
+    </view>
+  </view>
+
+  <view
+    wx:if="{{popupVisible}}"
+    class="popup-mask tap-soft"
+    bindtap="closePopup"
+    catchtouchmove="noop"
+  >
+    <view class="popup-panel" catchtap="noop">
+      <view class="popup-head">
+        <text class="popup-title">{{popupTitle}}</text>
+        <text class="popup-close tap-soft" bindtap="closePopup">✕</text>
+      </view>
+      <scroll-view class="popup-scroll" scroll-y show-scrollbar="{{false}}">
+        <block wx:if="{{popupItems.length}}">
+          <view wx:for="{{popupItems}}" wx:key="index" class="popup-row">
+            <text class="popup-name">{{item.name}}</text>
+            <text class="popup-amt">{{item.valueFmt}}</text>
+          </view>
+        </block>
+        <text wx:else class="popup-empty">暂无明细数据</text>
+      </scroll-view>
+    </view>
+  </view>
 </view>

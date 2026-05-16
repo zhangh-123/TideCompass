@@ -23,6 +23,11 @@ exports.main = async (event) => {
     return { success: false, message: 'reportData 无效' }
   }
 
+  const payload =
+    rawAssessment && rawAssessment.payload && typeof rawAssessment.payload === 'object'
+      ? rawAssessment.payload
+      : {}
+
   await db.collection('health_reports').add({
     data: {
       openId,
@@ -32,6 +37,8 @@ exports.main = async (event) => {
       netWorth: reportData.netWorth,
       totalAssets: reportData.totalAssets,
       totalLiabilities: reportData.totalLiabilities,
+      monthlyIncome: Number(payload.monthlyIncome) || Number(reportData.monthlyIncome) || 0,
+      monthlyExpense: Number(payload.monthlyExpense) || Number(reportData.monthlyExpense) || 0,
       radarScores: reportData.radarScores || {},
       insights: reportData.insights || {},
       coreSkill: reportData.coreSkill || '',

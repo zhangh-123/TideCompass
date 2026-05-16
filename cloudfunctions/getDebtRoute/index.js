@@ -35,7 +35,40 @@ function parseRemainingMonths(rec) {
 }
 
 function parseBalance(rec) {
-  return toNum(rec.balance || rec.amount || rec.principal || rec.remainAmount || rec.remaining)
+  return toNum(rec.balance || rec.amount || rec.principal || rec.remainAmount || rec.remaining || rec.value)
+}
+
+function isCollectionMissingError(err) {
+  const msg = String((err && err.message) || (err && err.errMsg) || err || '')
+  return /502005|DATABASE_COLLECTION_NOT_EXIST|collection not exists|Db or Table not exist/i.test(msg)
+}
+
+/** 优先 debt_records；集合未建时回退 balance_snapshot.liabilities（资产负债表） */
+async function loadDebtRows(openId) {
+  try {
+    const res = await db.collection('debt_records').where({ openId }).limit(500).get()
+    return res.data || []
+  } catch (e) {
+    if (!isCollectionMissingError(e)) throw e
+    console.warn('[getDebtRoute] debt_records missing, fallback to balance_snapshot')
+  }
+
+  try {
+    const snapRes = await db.collection('balance_snapshot').where({ openId }).limit(1).get()
+    const snap = snapRes.data && snapRes.data[0]
+    const lines = (snap && snap.liabilities) || []
+    return lines.map((item, i) => ({
+      _id: `snap_liability_${i}`,
+      name: (item && (item.name || item.type)) || '负债项',
+      balance: item && item.value,
+      amount: item && item.value,
+      apr: item && item.apr,
+      maturityDate: item && item.maturityDate
+    }))
+  } catch (e2) {
+    if (isCollectionMissingError(e2)) return []
+    throw e2
+  }
 }
 
 exports.main = async (event = {}) => {
@@ -43,8 +76,7 @@ exports.main = async (event = {}) => {
   if (!openId) return { success: false, message: '未登录' }
 
   const sortMode = String(event.sortMode || 'avalanche')
-  const res = await db.collection('debt_records').where({ openId }).limit(500).get()
-  const rows = res.data || []
+  const rows = await loadDebtRows(openId)
 
   const list = rows.map((r) => {
     const apr = parseApr(r)

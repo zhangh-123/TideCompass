@@ -169,6 +169,14 @@
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
   background: #ffffff;
   border-top: 1rpx solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.composer.composer-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 30;
 }
 
 .icon-btn {
@@ -199,19 +207,19 @@
 
 .composer-input {
   flex: 1;
-  width: 0;
-  height: 72rpx;
+  width: 100%;
+  min-width: 0;
   min-height: 72rpx;
-  max-height: 72rpx;
-  padding: 0 24rpx;
+  max-height: 240rpx;
+  padding: 16rpx 24rpx;
   font-size: 30rpx;
   color: #1e293b;
   background: #f1f5f9;
-  border-radius: 40rpx;
+  border-radius: 24rpx;
   border: 2rpx solid transparent;
   box-sizing: border-box;
-  line-height: 72rpx;
-  overflow: hidden;
+  line-height: 1.45;
+  overflow-y: auto;
 }
 
 .composer-input.is-focus {
@@ -223,6 +231,7 @@
 .send-btn {
   flex-shrink: 0;
   margin: 0 !important;
+  min-height: 72rpx !important;
   height: 72rpx !important;
   line-height: 1.2 !important;
   width: 120rpx !important;
@@ -269,13 +278,6 @@
   font-weight: 500;
 }
 
-.empty-tip-center {
-  text-align: center;
-  font-size: 24rpx;
-  color: #94a3b8;
-  padding: 14rpx 0 8rpx;
-}
-
 .bubble.assistant::before {
   content: '';
   position: absolute;
@@ -308,8 +310,12 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
+}
+
+.composer-main-full {
+  width: 100%;
 }
 
 .emoji-panel {

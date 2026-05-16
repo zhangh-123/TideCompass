@@ -12,25 +12,19 @@
   <scroll-view
     class="chat"
     scroll-y
-    enhanced
     show-scrollbar="{{false}}"
     scroll-with-animation
     scroll-into-view="{{scrollIntoView}}"
+    style="padding-bottom: {{chatBottomPad}}px;"
   >
-    <view wx:if="{{messages.length <= 1}}" class="empty-tip-center">请输入你的想法，或上传相关财务文件</view>
     <block wx:for="{{messages}}" wx:key="id">
       <view id="msg-{{item.id}}" class="msg-row {{item.role}}">
         <view class="bubble-wrap {{item.role}}">
           <view
             wx:if="{{item.messageType === 'file'}}"
-            class="file-card {{item.role}}"
-            data-local="{{item.localPath}}"
-            data-cloud="{{item.cloudFileId}}"
-            bindtap="onPreviewFile"
+            class="bubble {{item.role}}"
           >
-            <text class="file-tag">已上传文件</text>
-            <text class="file-name">{{item.fileName}}</text>
-            <text class="file-meta">{{item.fileSizeKb}} KB · 点击查看</text>
+            <text class="bubble-text">（此前上传的文件记录；请改用文字说明具体金额与名称，例如：度小满 欠款 5000 元）</text>
           </view>
           <view wx:else class="bubble {{item.role}}">
             <text class="bubble-text">{{item.content}}</text>
@@ -50,40 +44,27 @@
   </scroll-view>
 
   <view wx:if="{{showGenerateButton}}" class="complete-panel safe-bottom">
-    <text class="complete-tip">信息已充足，可生成报告。</text>
+    <text class="complete-tip">财务情况已盘点完毕，可生成财务体检报告。</text>
     <button class="next-step-btn tap-blend" hover-class="none" bindtap="onGenerateReport" loading="{{generating}}" disabled="{{generating}}">生成报告</button>
   </view>
 
-  <view wx:if="{{!showGenerateButton}}" class="composer safe-bottom">
-    <view class="composer-shortcuts">
-      <button
-        class="icon-btn tap-blend"
-        hover-class="none"
-        loading="{{uploadingImage}}"
-        disabled="{{uploadingImage || aiTyping || generating || sending}}"
-        bindtap="onUploadImageTap"
-      >
-        ＋
-      </button>
-      <button
-        class="icon-btn tap-blend"
-        hover-class="none"
-        disabled="{{aiTyping || generating || sending}}"
-        bindtap="onToggleEmoji"
-      >
-        ☺
-      </button>
-    </view>
-    <view class="composer-main">
+  <view
+    wx:if="{{!showGenerateButton}}"
+    class="composer safe-bottom composer-fixed"
+    style="bottom: {{keyboardHeight}}px;"
+  >
+    <view class="composer-main composer-main-full">
       <textarea
         class="composer-input {{composerFocus ? 'is-focus' : ''}}"
-        placeholder="请输入回复"
+        placeholder="{{composerPlaceholder}}"
         maxlength="800"
-        auto-height="{{false}}"
+        auto-height="{{true}}"
         cursor-spacing="28"
-        show-confirm-bar="{{true}}"
+        show-confirm-bar="{{false}}"
         confirm-type="send"
-        value="{{draft}}"
+        adjust-position="{{false}}"
+        bindkeyboardheightchange="onComposerKeyboardHeight"
+        value="{{composerSeed}}"
         bindinput="onDraftInput"
         bindfocus="onComposerFocus"
         bindblur="onComposerBlur"
@@ -97,81 +78,6 @@
       >
         {{sending ? '发送中…' : '发送'}}
       </button>
-    </view>
-  </view>
-  <view wx:if="{{!showGenerateButton && emojiVisible}}" class="emoji-panel safe-bottom">
-    <view class="emoji-grid">
-      <text
-        wx:for="{{quickEmojis}}"
-        wx:key="*this"
-        class="emoji-item tap-blend"
-        data-emoji="{{item}}"
-        bindtap="onPickEmoji"
-      >
-        {{item}}
-      </text>
-    </view>
-  </view>
-  <view wx:if="{{imageReviewVisible}}" class="review-mask" catchtouchmove="onReviewMaskTouchMove">
-    <view class="review-modal review-modal-table">
-      <text class="review-title">核对识别结果（表格）</text>
-      <text class="review-hint">
-        AI 已尽量还原层级（汇总行下挂分项）；请对照原图修改名称、金额或类型。可添加同级/子项；删除会移除该行及其子项。完成后点「确认并发送」。
-      </text>
-      <scroll-view scroll-y class="review-table-scroll" enhanced show-scrollbar="{{false}}">
-        <view class="review-table-head review-table-grid">
-          <text class="th-name">名称</text>
-          <text class="th-amt">金额(元)</text>
-          <text class="th-type">类型</text>
-          <text class="th-act">操作</text>
-        </view>
-        <block wx:for="{{imageReviewRows}}" wx:key="id">
-          <view class="review-table-row">
-            <view class="review-table-grid review-table-row-inner">
-              <view class="td-name" style="padding-left: {{item.padRpx}}rpx;">
-                <input
-                  class="review-cell-input"
-                  value="{{item.label}}"
-                  placeholder="名称"
-                  data-id="{{item.id}}"
-                  bindinput="onReviewLabelInput"
-                />
-                <text wx:if="{{item.isTotal}}" class="rollup-tag">汇总</text>
-              </view>
-              <view class="td-amt-cell">
-                <input
-                  class="review-cell-input td-amt-input"
-                  type="digit"
-                  value="{{item.amount}}"
-                  placeholder="金额"
-                  data-id="{{item.id}}"
-                  bindinput="onReviewAmountInput"
-                />
-              </view>
-              <view class="td-type-cell">
-                <picker
-                  mode="selector"
-                  range="{{reviewCategoryLabels}}"
-                  value="{{item.categoryIndex}}"
-                  data-id="{{item.id}}"
-                  bindchange="onReviewCategoryPick"
-                >
-                  <view class="review-picker-face">{{reviewCategoryLabels[item.categoryIndex]}}</view>
-                </picker>
-              </view>
-              <view class="td-act">
-                <text class="row-mini tap-blend" data-parent-id="{{item.id}}" catchtap="onAddReviewChildRow">子项</text>
-                <text class="row-mini danger tap-blend" data-id="{{item.id}}" catchtap="onDeleteReviewRow">删除</text>
-              </view>
-            </view>
-          </view>
-        </block>
-      </scroll-view>
-      <view class="review-add-row tap-blend" hover-class="none" catchtap="onAddReviewRootRow">添加同级行</view>
-      <view class="review-actions">
-        <button class="review-btn ghost" hover-class="none" bindtap="onCancelImageReview">取消</button>
-        <button class="review-btn primary" hover-class="none" bindtap="onConfirmImageReview">确认并发送</button>
-      </view>
     </view>
   </view>
 </view>

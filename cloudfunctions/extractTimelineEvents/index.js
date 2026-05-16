@@ -7,6 +7,11 @@ cloud.init({
 
 const db = cloud.database()
 
+function httpTimeoutMs() {
+  const raw = Number(process.env.LLM_HTTP_TIMEOUT_MS)
+  return Number.isFinite(raw) && raw >= 5000 ? Math.min(raw, 55000) : 45000
+}
+
 const DEFAULT_SYSTEM_PROMPT = `你是一名财务信息提取专家。从以下对话中提取用户所有与财务相关的事件，包括：
 - 收入变化风险（如裁员、降薪）
 - 大额一次性支出（学费、医疗、装修等）
@@ -115,7 +120,7 @@ exports.main = async (event = {}) => {
         ]
       },
       {
-        timeout: 15000,
+        timeout: httpTimeoutMs(),
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'

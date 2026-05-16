@@ -7,8 +7,8 @@
 | 模块 | 说明 |
 |------|------|
 | 账号与安全 | 登录、手机号绑定；资料填写页 `profile`；「我的」中修改个人信息、退出登录（`utils/session.js`） |
-| 财务体检 / 评估 | 引导式评估、`pages/assessment`；多图依次识图后进入可编辑表格核对（结构化 JSON 提示词与解析见 `utils/visionFinancialTable.js`，结果清洗见 `utils/ocrReviewText.js`）；生成报告前可选云函数 `extractAssessmentStructured` 抽取结构化字段并与规则合并（`utils/assessmentStructuredMerge.js`）；用户画像拼入 system 提示词见 `utils/assessmentUserContext.js`；规则解析见 `utils/extractHelper.js`；大模型 HTTP 调用见云函数 `chatCompletion` |
-| 报告 | 报告生成流程、双表诊断页 `pages/report`（四维雷达 + 分数说明文案）、详情与图表（含 ECharts） |
+| 财务体检 / 评估 | 引导式评估、`pages/assessment`；生成报告时**AI 优先**（云函数 `extractAssessmentStructured` 全对话结构化 + 助手汇总话术 `assessmentDialogSummaryParse`），规则抽取 `inferAssessmentPayload` 仅兜底（见 `assessmentStructuredMerge.js`）；画像见 `assessmentUserContext.js`；大模型见 `chatCompletion`/`extractAssessmentStructured`/`extractTimelineEvents` |
+| 报告 | 财务健康诊断页 `pages/report`（KPI 驾驶舱 + 资产/负债明细弹层 + 云函数 `generateFinancialAdvice` 智能分析）；历史数据 `getLatestHealthReport`；完成体检写入 `health_reports` |
 | 首页与导航 | `pages/index`、引导页 `carousel` |
 | 收支 | 手动记账、流水列表、对话式记账（`chat_add`） |
 | 资产与现金流 | 余额快照、`balance`，预算 `budget` |

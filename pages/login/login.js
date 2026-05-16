@@ -1,6 +1,9 @@
 const { getHomePath } = require('../../utils/route.js')
 const { clearAssessmentCaches } = require('../../utils/session.js')
 
+/** 微信端 callFunction 默认超时偏短，冷启动时易报 Error: timeout；与云函数 config 上限对齐 */
+const CLOUD_FUNCTION_CLIENT_MS = 60000
+
 Page({
   data: {
     logging: false
@@ -19,7 +22,8 @@ Page({
       })
 
       const res = await wx.cloud.callFunction({
-        name: 'getOpenId'
+        name: 'getOpenId',
+        config: { timeout: CLOUD_FUNCTION_CLIENT_MS }
       })
 
       const openId = res.result && res.result.openId
@@ -30,7 +34,7 @@ Page({
       const db = wx.cloud.database()
       const users = db.collection('users')
       const previousOpenId = wx.getStorageSync('openId') || ''
-      const { data: existing } = await users.where({ openId }).get()
+      const { data: existing } = await users.where({ openId }).limit(1).get()
 
       if (!existing || existing.length === 0) {
         await users.add({
@@ -51,7 +55,7 @@ Page({
 
       wx.setStorageSync('openId', openId)
 
-      const { data: userRows } = await users.where({ openId }).get()
+      const { data: userRows } = await users.where({ openId }).limit(1).get()
       const record = userRows && userRows[0]
       const nextUrl = getHomePath(record)
 
@@ -60,8 +64,10 @@ Page({
       })
     } catch (err) {
       console.error('登录失败', err)
+      const raw = String((err && (err.errMsg || err.message)) || '')
+      const isTimeout = /timeout|超时/i.test(raw)
       wx.showToast({
-        title: err.errMsg || err.message || '登录失败',
+        title: isTimeout ? '登录请求超时，请检查网络后重试' : raw || '登录失败',
         icon: 'none',
         duration: 2500
       })

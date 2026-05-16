@@ -1,5 +1,8 @@
 const { getHomePath } = require('../../utils/route.js')
 
+/** 避免首页云函数冷启动触发客户端默认短超时（登录后 reLaunch 常见） */
+const CLOUD_FUNCTION_CLIENT_MS = 60000
+
 function fmtMoney(n) {
   const v = Math.round(Number(n) || 0)
   const sign = v < 0 ? '-' : ''
@@ -243,6 +246,8 @@ Page({
         )
       })
 
+      // 与首屏 DB 并行错开一帧，减轻冷启动时云通道并发尖峰（仍失败时 loadWarnings 内会吞错）
+      await new Promise((resolve) => setTimeout(resolve, 0))
       await this.loadWarnings()
     } catch (e) {
       console.error('loadHomeData', e)
@@ -261,7 +266,11 @@ Page({
 
   async loadWarnings() {
     try {
-      const res = await wx.cloud.callFunction({ name: 'getActiveWarnings', data: {} })
+      const res = await wx.cloud.callFunction({
+        name: 'getActiveWarnings',
+        data: {},
+        config: { timeout: CLOUD_FUNCTION_CLIENT_MS }
+      })
       const body = res.result || {}
       const warnings = Array.isArray(body.warnings) ? body.warnings : []
       this.setData({

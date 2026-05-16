@@ -1,8 +1,7 @@
 {
-  "navigationBarTitleText": "双表诊断报告",
-  "navigationBarBackgroundColor": "#F8FAFC",
-  "backgroundColor": "#F8FAFC",
-  "usingComponents": {
-    "ec-canvas": "../../components/ec-canvas/ec-canvas"
-  }
+  "navigationBarTitleText": "财务健康诊断报告",
+  "navigationBarBackgroundColor": "#F8F9FA",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#F8F9FA",
+  "usingComponents": {}
 }

@@ -190,7 +190,7 @@ async function runChatCompletion(event = {}, context) {
         url,
         {
           model,
-          temperature: 0.5,
+          temperature: imageUrl ? 0.5 : 0.25,
           max_tokens: 2048,
           messages
         },
